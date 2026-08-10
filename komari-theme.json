@@ -2,9 +2,9 @@
   "name": "Komari Glass Kv",
   "short": "GlassKv",
   "description": "Kv 定制版 Komari 毛玻璃主题，基于 Komari Glassmorphism",
-  "version": "3.3.3-kv.2",
+  "version": "3.3.3-kv.3",
   "author": "Kv",
-  "url": "https://github.com/sanrokamlan-prog/komari-theme-Glassmorphism",
+  "url": "https://github.com/stevenlkw/komari-theme-Glass-Kv",
   "preview": "preview.png",
   "configuration": {
     "type": "managed",

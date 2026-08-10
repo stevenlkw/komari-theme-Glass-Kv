@@ -12,6 +12,15 @@
 
 ## 当前任务
 
+- 状态：done，Kv v3.3.3-kv.3 纵向节点面板实现与归档验证完成
+- 目标：保留 Glass Kv 数据层、公开页和后台路由，仅把节点卡片重排为更清晰的纵向信息面板。
+- 实现：三行服务器资料；CPU/内存/Swap/硬盘/流量五条独立彩色轨道；实时与累计上下行；三网线路、延迟、丢包和五级质量短柱；底部保留真实历史延迟/丢包短柱。
+- 数据边界：Komari 无独立带宽/线路字段，使用 `带宽:...;电信:...;联通:...;移动:...` 节点标签补充，缺失显示 `-`，不猜测。
+- 质量等级：沿用现有 Ping 延迟和丢包五级阈值，取两者较差等级；不是伪造历史图。
+- 布局：compact 最小宽度 340px，桌面自动多列；平板/手机沿用响应式单列规则；DeferredRender 高度同步新卡片。
+- 验证：Bun 1.3.14 下 lint、type-check、生产 build、git diff --check 通过；Impeccable 机械检测为零告警。本地浏览器预览被应用安全策略拒绝，未绕过该限制。
+- 成品：`Komari-Glass-Kv-3.3.3-kv.3.zip`；内含 manifest 3.3.3-kv.3、preview.png、dist/index.html，SHA-256 为 `F071338BC4151DF2423B7C68350BF61BF0D26877F551BF711A34C1288764881B`。
+
 - 状态：done，Kv v3.3.3-kv.2 服务商显示一致性修复完成
 - 目标：让 compact/comfortable/large 节点卡片与列表视图使用相同的登录后 IP/ASN 服务商识别结果。
 - 实现：NodeCard 复用现有 useNodeProviderMetadata 共享缓存与 providerGeoLookup 权限；mini 卡片不显示该区域，因此不启用查询。

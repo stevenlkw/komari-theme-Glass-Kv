@@ -265,7 +265,7 @@ const isDenseNodeGrid = computed(() => appStore.nodeViewMode === 'card' && nodeL
 const enableNodeCardTransition = computed(() => !appStore.disablePageAnimation && !isDenseNodeGrid.value)
 const reduceDenseNodeEffects = computed(() => appStore.nodeViewMode === 'card' && nodeList.value.length > denseNodePingAnimationThreshold)
 const deferNodeCards = computed(() => appStore.nodeViewMode === 'card' && nodeList.value.length > UI_CONFIG.virtualList.nodeThreshold)
-const deferredNodeCardHeight = computed(() => ({ mini: 220, compact: 270, comfortable: 310, large: 350 }[appStore.nodeCardSize]))
+const deferredNodeCardHeight = computed(() => ({ mini: 390, compact: 520, comfortable: 540, large: 570 }[appStore.nodeCardSize]))
 
 const quickControlCounts = computed<Record<HomeQuickControlKey, number>>(() => {
   let base = groupNodeList.value
@@ -408,10 +408,10 @@ const activeToolTitle = computed(() => {
 
 const nodeCardGridClass = computed(() => {
   const sizeClass: Record<typeof appStore.nodeCardSize, string> = {
-    mini: 'gap-3 sm:grid-cols-[repeat(auto-fill,minmax(270px,1fr))]',
-    compact: 'gap-3 sm:grid-cols-[repeat(auto-fill,minmax(300px,1fr))]',
-    comfortable: 'gap-4 sm:grid-cols-[repeat(auto-fill,minmax(360px,1fr))]',
-    large: 'gap-5 sm:grid-cols-[repeat(auto-fill,minmax(420px,1fr))]',
+    mini: 'gap-3 sm:grid-cols-[repeat(auto-fill,minmax(290px,1fr))]',
+    compact: 'gap-3 sm:grid-cols-[repeat(auto-fill,minmax(340px,1fr))]',
+    comfortable: 'gap-4 sm:grid-cols-[repeat(auto-fill,minmax(380px,1fr))]',
+    large: 'gap-5 sm:grid-cols-[repeat(auto-fill,minmax(430px,1fr))]',
   }
   return ['grid grid-cols-1', sizeClass[appStore.nodeCardSize]]
 })
