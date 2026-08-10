@@ -12,6 +12,12 @@
 
 ## 当前任务
 
+- 状态：done，Glass Kv v3.3.3-kv.11 内存总量显示与架构字段移除完成
+- 目标：首页系统资料不再显示 amd64 等架构文字；在同一容量摘要行新增由 Komari `mem_total` 提供的内存总量，并同步后台字段为 `memoryTotal`。
+- 不做：不新增数据请求，不修改内存使用率或详情页，不保留无实际展示价值的首页架构字段。
+- 验证：Impeccable 布局检测零告警；改动文件 ESLint、`bun run build`、Vue 严格类型检查与 `git diff --check` 通过；归档包含 manifest、preview.png、dist/index.html。
+- 成品：`Komari-Glass-Kv-3.3.3-kv.11.zip`，manifest 版本 3.3.3-kv.11，SHA-256 为 `E848E399C5E4DDB10ADF8D9DCC4AE6A00AEEF3964514543DE9F02B1F91250A1C`。
+
 - 状态：done，Glass Kv v3.3.3-kv.10 费用位置调整完成
 - 目标：把节点价格和付费周期移到运行天数、剩余时间所在行的右侧，服务商行只保留服务商和操作系统。
 - 不做：不修改 Komari 价格数据、计费周期解析、访客价格隐私或卡片后台字段开关。

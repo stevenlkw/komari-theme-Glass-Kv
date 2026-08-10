@@ -9,7 +9,7 @@ const SECTION_KEYS: readonly NodeCardSection[] = ['system', 'usage', 'network', 
 const KEY_LIST_SEPARATOR = /[\s,，、]+/
 
 const FIELD_KEYS: Record<NodeCardFieldGroup, readonly NodeCardField[]> = {
-  system: ['provider', 'os', 'price', 'billing', 'cores', 'arch', 'diskTotal', 'trafficLimit', 'bandwidth', 'cpuModel', 'cpuRating', 'uptime', 'remaining', 'virtualization'],
+  system: ['provider', 'os', 'price', 'billing', 'cores', 'memoryTotal', 'diskTotal', 'trafficLimit', 'bandwidth', 'cpuModel', 'cpuRating', 'uptime', 'remaining', 'virtualization'],
   usage: ['cpu', 'memory', 'swap', 'disk', 'traffic'],
   network: ['uploadSpeed', 'downloadSpeed', 'uploadTotal', 'downloadTotal'],
   quality: ['telecom', 'unicom', 'mobile', 'latency', 'loss', 'history'],
@@ -24,14 +24,14 @@ const SECTION_PRESETS: Record<string, readonly NodeCardSection[]> = {
 
 const FIELD_PRESETS: Record<NodeCardFieldGroup, readonly NodeCardField[]> = {
   // virtualization 可通过 custom 字段重新启用，默认不占用卡片高度。
-  system: ['provider', 'os', 'price', 'billing', 'cores', 'arch', 'diskTotal', 'trafficLimit', 'bandwidth', 'cpuModel', 'cpuRating', 'uptime', 'remaining'],
+  system: ['provider', 'os', 'price', 'billing', 'cores', 'memoryTotal', 'diskTotal', 'trafficLimit', 'bandwidth', 'cpuModel', 'cpuRating', 'uptime', 'remaining'],
   usage: FIELD_KEYS.usage,
   network: FIELD_KEYS.network,
   quality: FIELD_KEYS.quality,
 }
 
 const FIELD_SETTING_KEYS: Record<NodeCardFieldGroup, string> = {
-  system: 'nodeCardSystemFieldsV3',
+  system: 'nodeCardSystemFieldsV4',
   usage: 'nodeCardUsageFieldsV2',
   network: 'nodeCardNetworkFieldsV2',
   quality: 'nodeCardQualityFieldsV2',

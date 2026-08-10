@@ -426,17 +426,16 @@ function hasRegion(region: string | null | undefined): boolean {
           </div>
 
           <div
-            v-if="nodeCardSettings.isSectionVisible('system') && (nodeCardSettings.isFieldVisible('system', 'cores') || nodeCardSettings.isFieldVisible('system', 'arch') || nodeCardSettings.isFieldVisible('system', 'diskTotal') || nodeCardSettings.isFieldVisible('system', 'trafficLimit') || nodeCardSettings.isFieldVisible('system', 'bandwidth') || nodeCardSettings.isFieldVisible('system', 'virtualization'))"
+            v-if="nodeCardSettings.isSectionVisible('system') && (nodeCardSettings.isFieldVisible('system', 'cores') || nodeCardSettings.isFieldVisible('system', 'memoryTotal') || nodeCardSettings.isFieldVisible('system', 'diskTotal') || nodeCardSettings.isFieldVisible('system', 'trafficLimit') || nodeCardSettings.isFieldVisible('system', 'bandwidth') || nodeCardSettings.isFieldVisible('system', 'virtualization'))"
             class="summary-line"
           >
-            <span
-              v-if="nodeCardSettings.isFieldVisible('system', 'cores') || nodeCardSettings.isFieldVisible('system', 'arch')"
-              class="summary-item"
-            >
+            <span v-if="nodeCardSettings.isFieldVisible('system', 'cores')" class="summary-item">
               <Icon icon="tabler:cpu" class="text-sky-500" />
-              <span v-if="nodeCardSettings.isFieldVisible('system', 'cores')">{{ props.node.cpu_cores || 0 }} 核</span>
-              <span v-if="nodeCardSettings.isFieldVisible('system', 'cores') && nodeCardSettings.isFieldVisible('system', 'arch')">·</span>
-              <span v-if="nodeCardSettings.isFieldVisible('system', 'arch')">{{ props.node.arch || '-' }}</span>
+              <span>{{ props.node.cpu_cores || 0 }} 核</span>
+            </span>
+            <span v-if="nodeCardSettings.isFieldVisible('system', 'memoryTotal')" class="summary-item">
+              <Icon icon="icon-park-outline:memory" class="text-emerald-500" />
+              <span>内存 {{ formatBytes(props.node.mem_total ?? 0) }}</span>
             </span>
             <span v-if="nodeCardSettings.isFieldVisible('system', 'diskTotal')" class="summary-item">
               <Icon icon="tabler:server-2" class="text-orange-500" />
