@@ -408,7 +408,7 @@ function hasRegion(region: string | null | undefined): boolean {
           </div>
 
           <div
-            v-if="nodeCardSettings.isFieldVisible('system', 'provider') || nodeCardSettings.isFieldVisible('system', 'os') || (nodeCardSettings.isFieldVisible('system', 'price') && priceAmountText) || (nodeCardSettings.isFieldVisible('system', 'billing') && billingText)"
+            v-if="nodeCardSettings.isFieldVisible('system', 'provider') || nodeCardSettings.isFieldVisible('system', 'os')"
             class="summary-line"
           >
             <span
@@ -422,20 +422,6 @@ function hasRegion(region: string | null | undefined): boolean {
             <span v-if="nodeCardSettings.isFieldVisible('system', 'os')" class="summary-item">
               <img :src="getOSImage(props.node.os)" :alt="getOSName(props.node.os)" class="size-3.5 shrink-0">
               <span>{{ getOSName(props.node.os) }}</span>
-            </span>
-            <span
-              v-if="nodeCardSettings.isFieldVisible('system', 'price') && priceAmountText"
-              class="inline-flex shrink-0 items-center gap-1 rounded-md bg-emerald-500/15 px-1.5 py-0.5 font-semibold text-emerald-700 dark:text-emerald-300"
-            >
-              <Icon icon="tabler:coin" />
-              <span>{{ priceAmountText }}</span>
-            </span>
-            <span
-              v-if="nodeCardSettings.isFieldVisible('system', 'billing') && billingText"
-              class="inline-flex shrink-0 items-center gap-1 rounded-md bg-amber-500/15 px-1.5 py-0.5 font-semibold text-amber-700 dark:text-amber-300"
-            >
-              <Icon icon="tabler:calendar-repeat" />
-              <span>{{ billingText }}</span>
             </span>
           </div>
 
@@ -494,7 +480,7 @@ function hasRegion(region: string | null | undefined): boolean {
           </div>
 
           <div
-            v-if="nodeCardSettings.isFieldVisible('system', 'uptime') || nodeCardSettings.isFieldVisible('system', 'remaining')"
+            v-if="nodeCardSettings.isFieldVisible('system', 'uptime') || nodeCardSettings.isFieldVisible('system', 'remaining') || (nodeCardSettings.isFieldVisible('system', 'price') && priceAmountText) || (nodeCardSettings.isFieldVisible('system', 'billing') && billingText)"
             class="summary-line"
           >
             <span v-if="nodeCardSettings.isFieldVisible('system', 'uptime')" class="summary-item">
@@ -508,6 +494,25 @@ function hasRegion(region: string | null | undefined): boolean {
             >
               <Icon icon="tabler:hourglass" class="text-amber-500" />
               {{ remainingInfo.text }}
+            </span>
+            <span
+              v-if="(nodeCardSettings.isFieldVisible('system', 'price') && priceAmountText) || (nodeCardSettings.isFieldVisible('system', 'billing') && billingText)"
+              class="ml-auto inline-flex shrink-0 items-center gap-1"
+            >
+              <span
+                v-if="nodeCardSettings.isFieldVisible('system', 'price') && priceAmountText"
+                class="inline-flex items-center gap-1 rounded-md bg-emerald-500/15 px-1.5 py-0.5 font-semibold text-emerald-700 dark:text-emerald-300"
+              >
+                <Icon icon="tabler:coin" />
+                <span>{{ priceAmountText }}</span>
+              </span>
+              <span
+                v-if="nodeCardSettings.isFieldVisible('system', 'billing') && billingText"
+                class="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-1.5 py-0.5 font-semibold text-amber-700 dark:text-amber-300"
+              >
+                <Icon icon="tabler:calendar-repeat" />
+                <span>{{ billingText }}</span>
+              </span>
             </span>
           </div>
         </div>

@@ -12,6 +12,12 @@
 
 ## 当前任务
 
+- 状态：done，Glass Kv v3.3.3-kv.10 费用位置调整完成
+- 目标：把节点价格和付费周期移到运行天数、剩余时间所在行的右侧，服务商行只保留服务商和操作系统。
+- 不做：不修改 Komari 价格数据、计费周期解析、访客价格隐私或卡片后台字段开关。
+- 验证：Bun 1.3.14 下 `bun run lint`、`bun run build`、`git diff --check` 通过；Vue 严格类型检查通过；Impeccable 布局检测为零告警；归档包含 manifest、preview.png、dist/index.html。
+- 成品：`Komari-Glass-Kv-3.3.3-kv.10.zip`，manifest 版本 3.3.3-kv.10，SHA-256 为 `2B838FEAFFC2F099C0CA7F07035C20DECE2523E7A4715E28C62583FB1030C9E8`。
+
 - 状态：done，Glass Kv v3.3.3-kv.9 系统资料顺序、CPU 分级与后台配置同步完成
 - 目标：操作系统移到服务商后；CPU 型号后显示本地 CPU 等级；主题后台只保留前台真实存在的 system/usage/network/quality 区块，并提供国旗开关与 cpuRating 字段。
 - 不做：不把本地型号分级描述成实测跑分，不增加外部请求或修改 Komari 节点数据。

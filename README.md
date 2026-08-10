@@ -8,13 +8,13 @@ v3.3.3 二次开发。
 
 ## 下载与安装
 
-下载 [Komari-Glass-Kv-3.3.3-kv.9.zip](./Komari-Glass-Kv-3.3.3-kv.9.zip)，
+下载 [Komari-Glass-Kv-3.3.3-kv.10.zip](./Komari-Glass-Kv-3.3.3-kv.10.zip)，
 进入 Komari 后台的主题管理页面，直接导入 ZIP。
 
 主题信息：
 
 - 名称：Komari Glass Kv
-- 版本：3.3.3-kv.9
+- 版本：3.3.3-kv.10
 - 作者：Kv
 - 默认卡片密度：compact
 - 支持浅色、深色及北京时间自动模式
