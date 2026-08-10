@@ -3,6 +3,7 @@ import type { IpGeo } from '@/utils/ipGeoHelper'
 import type { ProviderResolveResult } from '@/utils/providerInfo'
 import { lookupIpGeo } from '@/utils/ipGeoHelper'
 import { resolveProviderInfo } from '@/utils/providerInfo'
+import { isNodeDisplayMetadataTag, parseTags } from '@/utils/tagHelper'
 
 export interface NodeProviderMetadata {
   provider: ProviderResolveResult | null
@@ -17,7 +18,12 @@ export function getNodeIps(node: NodeData): string[] {
 }
 
 export function getProviderMetadataText(node: NodeData): string {
-  return [node.name, node.public_remark, node.remark, node.tags, node.group, node.region]
+  const relevantTags = parseTags(node.tags)
+    .map(tag => tag.text)
+    .filter(tag => !isNodeDisplayMetadataTag(tag))
+    .join(' ')
+
+  return [node.name, node.public_remark, node.remark, relevantTags, node.group, node.region]
     .filter(Boolean)
     .join(' ')
 }

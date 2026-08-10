@@ -12,7 +12,7 @@ import { formatBytesPerSecondWithConfig, formatBytesWithConfig, formatDateTime, 
 import { getDiskPercentage, getMemoryPercentage, getTrafficUsed, getTrafficUsedPercentage, hasTrafficLimit } from '@/utils/nodeMetricsHelper'
 import { getOSImage, getOSName } from '@/utils/osImageHelper'
 import { getRegionCode, getRegionDisplayName } from '@/utils/regionHelper'
-import { formatPrice, getBillingCycleText, getDaysUntilExpired, getExpireStatus, isFreePrice, parseTags } from '@/utils/tagHelper'
+import { formatPrice, getBillingCycleText, getDaysUntilExpired, getExpireStatus, isFreePrice, isNodeDisplayMetadataTag, parseTags } from '@/utils/tagHelper'
 
 const props = withDefaults(defineProps<{
   node: NodeData
@@ -66,7 +66,6 @@ const NODE_METRIC_ICONS = {
   traffic: 'tabler:arrows-transfer-up-down',
 } as const
 
-const METADATA_TAG_PATTERN = /^(?:带宽|bandwidth|电信|telecom|ctcc|联通|unicom|cucc|移动|mobile|cmcc)\s*[:：=]/i
 const BANDWIDTH_TAG_PATTERN = /^(?:带宽|bandwidth)[ \t]*[:：=][ \t]*([^ \t].*)$/i
 const NETWORK_TAG_PATTERNS = {
   telecom: /^(?:电信|telecom|ctcc)[ \t]*[:：=][ \t]*([^ \t].*)$/i,
@@ -173,11 +172,17 @@ function getMetadataTagValue(pattern: RegExp): string {
 
 const bandwidthText = computed(() => getMetadataTagValue(BANDWIDTH_TAG_PATTERN) || '-')
 const providerInfo = computed(() => getNodeProviderMetadata(props.node)?.provider)
+const providerGroupText = computed(() => props.node.groups.join(' · '))
+const providerIcon = computed(() => providerGroupText.value ? 'tabler:building-skyscraper' : providerInfo.value?.primary.icon ?? 'tabler:building-skyscraper')
 const providerText = computed(() => {
-  const groupText = props.node.groups.join(' · ')
-  return [providerInfo.value?.displayName, groupText].filter(Boolean).join(' · ') || '未标注服务商'
+  return providerGroupText.value || providerInfo.value?.displayName || '未标注服务商'
 })
-const providerTooltip = computed(() => [...(providerInfo.value?.tooltipLines ?? []), props.node.groups.join(' · ')].filter(Boolean).join('\n') || providerText.value)
+const providerTooltip = computed(() => {
+  const detectedLines = providerInfo.value?.tooltipLines ?? []
+  if (providerGroupText.value)
+    return [`服务商：${providerGroupText.value}`, ...detectedLines.map(line => `IP 归属：${line}`)].join('\n')
+  return detectedLines.join('\n') || providerText.value
+})
 const trafficLimitText = computed(() => hasTrafficLimit(props.node) ? formatBytes(props.node.traffic_limit) : '∞')
 
 function getMetricFillClass(baseClass: string, percentage: number): string {
@@ -285,7 +290,7 @@ const displayNetworkRows = computed(() => networkRows.value.map((row) => {
   }
 }))
 
-const customTags = computed(() => parsedTags.value.filter(tag => !METADATA_TAG_PATTERN.test(tag.text)).map(tag => tag.text))
+const customTags = computed(() => parsedTags.value.filter(tag => !isNodeDisplayMetadataTag(tag.text)).map(tag => tag.text))
 
 function getRegionAltText(region: string): string {
   return getRegionDisplayName(region) || getRegionCode(region)
@@ -375,14 +380,11 @@ function hasRegion(region: string | null | undefined): boolean {
         <!-- 三行服务器资料，保持单向阅读顺序 -->
         <div v-if="!isMiniNodeCard" class="server-summary -mt-1 space-y-1.5 rounded-xl bg-slate-500/5 px-2.5 py-2 text-[11px] text-muted-foreground">
           <div class="summary-line" :title="providerTooltip">
-            <Icon :icon="providerInfo?.primary.icon ?? 'tabler:building-skyscraper'" class="text-violet-500" />
+            <Icon :icon="providerIcon" class="text-violet-500" />
             <span>{{ providerText }}</span>
             <span class="summary-separator">·</span>
             <img :src="getOSImage(props.node.os)" :alt="getOSName(props.node.os)" class="size-3.5 shrink-0">
             <span>{{ getOSName(props.node.os) }}</span>
-            <span class="summary-separator">·</span>
-            <Icon icon="tabler:box" class="text-orange-500" />
-            <span>{{ props.node.virtualization || '物理机' }}</span>
             <span class="summary-separator">·</span>
             <Icon icon="tabler:gauge" class="text-cyan-500" />
             <span>带宽 {{ bandwidthText }}</span>
@@ -399,13 +401,16 @@ function hasRegion(region: string | null | undefined): boolean {
           </div>
           <div class="summary-line">
             <template v-if="priceAmountText">
-              <Icon icon="tabler:currency-yen" class="text-emerald-500" />
-              <span>{{ priceAmountText }}</span>
+              <span class="inline-flex shrink-0 items-center gap-1 rounded-md bg-emerald-500/15 px-1.5 py-0.5 font-semibold text-emerald-700 dark:text-emerald-300">
+                <Icon icon="tabler:coin" />
+                <span>{{ priceAmountText }}</span>
+              </span>
             </template>
             <template v-if="billingText">
-              <span class="summary-separator">·</span>
-              <Icon icon="tabler:credit-card-pay" class="text-fuchsia-500" />
-              <span>{{ billingText }}</span>
+              <span class="inline-flex shrink-0 items-center gap-1 rounded-md bg-amber-500/15 px-1.5 py-0.5 font-semibold text-amber-700 dark:text-amber-300">
+                <Icon icon="tabler:calendar-repeat" />
+                <span>{{ billingText }}</span>
+              </span>
             </template>
             <span v-if="priceAmountText || billingText" class="summary-separator">·</span>
             <Icon icon="tabler:clock-play" class="text-teal-500" />

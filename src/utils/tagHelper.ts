@@ -65,6 +65,13 @@ export const TAG_COLORS = [
   'sky',
 ] as const
 
+/** 节点卡片专用的结构化信息标签，不应参与服务商自动识别。 */
+export const NODE_DISPLAY_METADATA_TAG_PATTERN = /^(?:带宽|bandwidth|电信|telecom|ctcc|联通|unicom|cucc|移动|mobile|cmcc)\s*[:：=]/i
+
+export function isNodeDisplayMetadataTag(tag: string): boolean {
+  return NODE_DISPLAY_METADATA_TAG_PATTERN.test(tag.trim())
+}
+
 /** Radix Themes 颜色到 HEX 的映射（基于 light 模式的 9 色阶） */
 export const TAG_COLOR_HEX_MAP: Record<TagColor, string> = {
   ruby: '#E5484D',
