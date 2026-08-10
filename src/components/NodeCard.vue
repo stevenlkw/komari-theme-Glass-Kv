@@ -383,13 +383,21 @@ function hasRegion(region: string | null | undefined): boolean {
 
     <template #default>
       <div class="flex flex-col relative" :class="nodeCardContentClass">
-        <!-- 服务器资料由托管主题设置决定区块、字段和顺序。 -->
+        <!-- 身份、硬件、系统与期限统一归入一个系统资料区块。 -->
         <div
-          v-if="!isMiniNodeCard && nodeCardSettings.isSectionVisible('identity')"
+          v-if="!isMiniNodeCard && (nodeCardSettings.isSectionVisible('identity') || nodeCardSettings.isSectionVisible('system'))"
           class="server-summary -mt-1 space-y-1.5 rounded-xl bg-slate-500/5 px-2.5 py-2 text-[11px] text-muted-foreground"
-          :style="{ order: nodeCardSettings.getSectionOrder('identity') }"
+          :style="{ order: Math.min(nodeCardSettings.getSectionOrder('identity'), nodeCardSettings.getSectionOrder('system')) }"
         >
-          <div class="summary-line">
+          <div class="section-heading">
+            <Icon icon="tabler:server-cog" class="text-violet-500" />
+            <span>系统资料</span>
+          </div>
+
+          <div
+            v-if="nodeCardSettings.isSectionVisible('identity') && (nodeCardSettings.isFieldVisible('identity', 'provider') || (nodeCardSettings.isFieldVisible('identity', 'price') && priceAmountText) || (nodeCardSettings.isFieldVisible('identity', 'billing') && billingText))"
+            class="summary-line"
+          >
             <span
               v-if="nodeCardSettings.isFieldVisible('identity', 'provider')"
               class="summary-item min-w-0"
@@ -398,17 +406,6 @@ function hasRegion(region: string | null | undefined): boolean {
               <Icon :icon="providerIcon" class="text-violet-500" />
               <span class="truncate">{{ providerText }}</span>
             </span>
-            <span v-if="nodeCardSettings.isFieldVisible('identity', 'os')" class="summary-item">
-              <img :src="getOSImage(props.node.os)" :alt="getOSName(props.node.os)" class="size-3.5 shrink-0">
-              <span>{{ getOSName(props.node.os) }}</span>
-            </span>
-            <span v-if="nodeCardSettings.isFieldVisible('identity', 'bandwidth')" class="summary-item">
-              <Icon icon="tabler:gauge" class="text-cyan-500" />
-              <span>带宽 {{ bandwidthText }}</span>
-            </span>
-          </div>
-
-          <div class="summary-line">
             <span
               v-if="nodeCardSettings.isFieldVisible('identity', 'price') && priceAmountText"
               class="inline-flex shrink-0 items-center gap-1 rounded-md bg-emerald-500/15 px-1.5 py-0.5 font-semibold text-emerald-700 dark:text-emerald-300"
@@ -423,31 +420,12 @@ function hasRegion(region: string | null | undefined): boolean {
               <Icon icon="tabler:calendar-repeat" />
               <span>{{ billingText }}</span>
             </span>
-            <span v-if="nodeCardSettings.isFieldVisible('identity', 'uptime')" class="summary-item">
-              <Icon icon="tabler:clock-play" class="text-teal-500" />
-              <span>{{ uptimeDaysText }}</span>
-            </span>
-            <span
-              v-if="nodeCardSettings.isFieldVisible('identity', 'remaining')"
-              class="summary-item rounded-md px-1"
-              :class="remainingInfo.danger ? 'bg-destructive/10 font-semibold text-destructive' : ''"
-            >
-              <Icon icon="tabler:hourglass" class="text-amber-500" />
-              {{ remainingInfo.text }}
-            </span>
           </div>
-        </div>
 
-        <div
-          v-if="!isMiniNodeCard && nodeCardSettings.isSectionVisible('system')"
-          class="server-summary space-y-1.5 rounded-xl bg-slate-500/5 px-2.5 py-2 text-[11px] text-muted-foreground"
-          :style="{ order: nodeCardSettings.getSectionOrder('system') }"
-        >
-          <div class="section-heading">
-            <Icon icon="tabler:server-cog" class="text-violet-500" />
-            <span>系统资料</span>
-          </div>
-          <div class="summary-line">
+          <div
+            v-if="nodeCardSettings.isSectionVisible('system') && (nodeCardSettings.isFieldVisible('system', 'cores') || nodeCardSettings.isFieldVisible('system', 'arch') || nodeCardSettings.isFieldVisible('system', 'diskTotal') || nodeCardSettings.isFieldVisible('system', 'trafficLimit') || nodeCardSettings.isFieldVisible('system', 'bandwidth') || nodeCardSettings.isFieldVisible('system', 'virtualization'))"
+            class="summary-line"
+          >
             <span
               v-if="nodeCardSettings.isFieldVisible('system', 'cores') || nodeCardSettings.isFieldVisible('system', 'arch')"
               class="summary-item"
@@ -476,7 +454,7 @@ function hasRegion(region: string | null | undefined): boolean {
           </div>
 
           <div
-            v-if="nodeCardSettings.isFieldVisible('system', 'cpuModel') || nodeCardSettings.isFieldVisible('system', 'kernel')"
+            v-if="nodeCardSettings.isSectionVisible('system') && (nodeCardSettings.isFieldVisible('system', 'cpuModel') || nodeCardSettings.isFieldVisible('system', 'os'))"
             class="summary-line"
           >
             <span
@@ -487,13 +465,27 @@ function hasRegion(region: string | null | undefined): boolean {
               <Icon icon="tabler:brand-amd" class="text-fuchsia-500" />
               <span class="truncate">{{ props.node.cpu_name || 'CPU 型号未知' }}</span>
             </span>
+            <span v-if="nodeCardSettings.isFieldVisible('system', 'os')" class="summary-item">
+              <img :src="getOSImage(props.node.os)" :alt="getOSName(props.node.os)" class="size-3.5 shrink-0">
+              <span>{{ getOSName(props.node.os) }}</span>
+            </span>
+          </div>
+
+          <div
+            v-if="nodeCardSettings.isSectionVisible('identity') && (nodeCardSettings.isFieldVisible('identity', 'uptime') || nodeCardSettings.isFieldVisible('identity', 'remaining'))"
+            class="summary-line"
+          >
+            <span v-if="nodeCardSettings.isFieldVisible('identity', 'uptime')" class="summary-item">
+              <Icon icon="tabler:clock-play" class="text-teal-500" />
+              <span>{{ uptimeDaysText }}</span>
+            </span>
             <span
-              v-if="nodeCardSettings.isFieldVisible('system', 'kernel')"
-              class="summary-item min-w-0"
-              :title="props.node.kernel_version || '内核未知'"
+              v-if="nodeCardSettings.isFieldVisible('identity', 'remaining')"
+              class="summary-item rounded-md px-1"
+              :class="remainingInfo.danger ? 'bg-destructive/10 font-semibold text-destructive' : ''"
             >
-              <Icon icon="tabler:terminal-2" class="text-teal-500" />
-              <span class="truncate">{{ props.node.kernel_version || '内核未知' }}</span>
+              <Icon icon="tabler:hourglass" class="text-amber-500" />
+              {{ remainingInfo.text }}
             </span>
           </div>
         </div>

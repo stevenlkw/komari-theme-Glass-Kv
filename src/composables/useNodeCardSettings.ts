@@ -9,8 +9,8 @@ const SECTION_KEYS: readonly NodeCardSection[] = ['identity', 'system', 'usage',
 const KEY_LIST_SEPARATOR = /[\s,，、]+/
 
 const FIELD_KEYS: Record<NodeCardFieldGroup, readonly NodeCardField[]> = {
-  identity: ['provider', 'os', 'region', 'bandwidth', 'price', 'billing', 'uptime', 'remaining'],
-  system: ['cores', 'arch', 'cpuModel', 'kernel', 'diskTotal', 'trafficLimit', 'bandwidth', 'virtualization'],
+  identity: ['provider', 'region', 'price', 'billing', 'uptime', 'remaining'],
+  system: ['cores', 'arch', 'diskTotal', 'trafficLimit', 'bandwidth', 'cpuModel', 'os', 'virtualization'],
   usage: ['cpu', 'memory', 'swap', 'disk', 'traffic'],
   network: ['uploadSpeed', 'downloadSpeed', 'uploadTotal', 'downloadTotal'],
   quality: ['telecom', 'unicom', 'mobile', 'latency', 'loss', 'history'],
@@ -26,7 +26,7 @@ const SECTION_PRESETS: Record<string, readonly NodeCardSection[]> = {
 const FIELD_PRESETS: Record<NodeCardFieldGroup, readonly NodeCardField[]> = {
   identity: FIELD_KEYS.identity,
   // virtualization 可通过 custom 字段重新启用，默认不占用卡片高度。
-  system: ['cores', 'arch', 'cpuModel', 'kernel', 'diskTotal', 'trafficLimit'],
+  system: ['cores', 'arch', 'diskTotal', 'trafficLimit', 'bandwidth', 'cpuModel', 'os'],
   usage: FIELD_KEYS.usage,
   network: FIELD_KEYS.network,
   quality: FIELD_KEYS.quality,
@@ -70,8 +70,13 @@ export function useNodeCardSettings() {
   const fields = computed<Record<NodeCardFieldGroup, NodeCardField[]>>(() => {
     const configured = {} as Record<NodeCardFieldGroup, NodeCardField[]>
     for (const group of Object.keys(FIELD_KEYS) as NodeCardFieldGroup[]) {
+      const rawValue = appStore.themeSettings[FIELD_SETTING_KEYS[group]]
+      // kv.6 的系统字段包含 kernel；升级时自动换成新的系统与带宽字段。
+      const value = group === 'system' && typeof rawValue === 'string' && rawValue.includes('kernel')
+        ? `${rawValue}\nos\nbandwidth`
+        : rawValue
       configured[group] = parseKeyList(
-        appStore.themeSettings[FIELD_SETTING_KEYS[group]],
+        value,
         FIELD_KEYS[group],
         FIELD_PRESETS[group],
       )

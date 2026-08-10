@@ -12,6 +12,12 @@
 
 ## 当前任务
 
+- 状态：done，Glass Kv v3.3.3-kv.7 系统资料区块重新归类完成
+- 目标：把服务商、硬件、流量配额、带宽、CPU 型号、系统、费用、运行和到期信息合并进一个系统资料块；移除内核显示。
+- 不做：不改数据来源、后台路由、详情页、Ping、费用权限或卡片其他功能。
+- 验证：Bun 1.3.14 下 `bun run lint`、`bun run build`、`git diff --check` 通过；Vue 严格类型检查通过；Impeccable 布局机械检测为零告警；归档包含 manifest、preview.png、dist/index.html。
+- 成品：`Komari-Glass-Kv-3.3.3-kv.7.zip`，manifest 版本 3.3.3-kv.7，SHA-256 为 `63E76106BC87775FC42CFC61920E03667B50344ABA40CE586D49510F82393020`。
+
 - 状态：done，Glass Kv v3.3.3-kv.6 展示层托管设置重构完成
 - 目标：保留请求、缓存、权限、Ping/负载、费用、搜索、收藏、详情、工具和管理入口，只重建前台展示层；前台可见区块和字段都能通过主题后台设置。
 - 实现：新增 `DESIGN.md` 与节点卡设置解析 composable；主题 manifest 增加卡片区块/字段、列表字段、导航、页脚、搜索和视图切换配置；节点卡按设置渲染并避免对隐藏区块加载元数据。
