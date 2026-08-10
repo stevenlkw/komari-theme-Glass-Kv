@@ -31,7 +31,9 @@ const appStore = useAppStore()
 const { getNodeProviderMetadata } = useNodeProviderMetadata({
   nodes: () => [props.node],
   customAliases: () => appStore.providerAliases,
-  allowGeoLookup: false,
+  enabled: () => appStore.nodeCardSize !== 'mini',
+  allowGeoLookup: () => appStore.privateFeaturesAllowed,
+  geoPermission: 'providerGeoLookup',
 })
 const isFavorite = computed(() => appStore.isFavoriteNode(props.node.uuid))
 

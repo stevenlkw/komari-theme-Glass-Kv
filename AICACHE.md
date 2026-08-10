@@ -12,6 +12,13 @@
 
 ## 当前任务
 
+- 状态：done，Kv v3.3.3-kv.2 服务商显示一致性修复完成
+- 目标：让 compact/comfortable/large 节点卡片与列表视图使用相同的登录后 IP/ASN 服务商识别结果。
+- 实现：NodeCard 复用现有 useNodeProviderMetadata 共享缓存与 providerGeoLookup 权限；mini 卡片不显示该区域，因此不启用查询。
+- 兼容：未登录访客继续只使用公开节点元数据，不扩大 IP 地理查询权限。
+- 验证：Bun 1.3.14 下 lint、type-check、build 与 git diff --check 通过；归档 manifest 为 3.3.3-kv.2。
+- 成品：Komari-Glass-Kv-3.3.3-kv.2.zip。
+
 - 状态：done，Kv 定制版构建与归档验证完成
 - 目标：以官方 Glassmorphism v3.3.3 为底板，在不改变默认 compact 密度和原有后台路由的前提下补充节点卡片资料。
 - 里程碑：M4 UI/UX 小范围展示增强；不引入新依赖，不新增业务请求。
