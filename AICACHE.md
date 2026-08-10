@@ -12,6 +12,12 @@
 
 ## 当前任务
 
+- 状态：done，Glass Kv v3.3.3-kv.9 系统资料顺序、CPU 分级与后台配置同步完成
+- 目标：操作系统移到服务商后；CPU 型号后显示本地 CPU 等级；主题后台只保留前台真实存在的 system/usage/network/quality 区块，并提供国旗开关与 cpuRating 字段。
+- 不做：不把本地型号分级描述成实测跑分，不增加外部请求或修改 Komari 节点数据。
+- 验证：Milan/Genoa/Rome 分级断言通过；Bun 1.3.14 下 `bun run lint`、`bun run build`、`git diff --check` 通过；Vue 严格类型检查通过；Impeccable 布局检测为零告警；归档包含 manifest、preview.png、dist/index.html。
+- 成品：`Komari-Glass-Kv-3.3.3-kv.9.zip`，manifest 版本 3.3.3-kv.9，SHA-256 为 `848D69FC84DA6DABADC9AA0184C48376128173818C9B82459E3090CF1769DF59`。
+
 - 状态：done，Glass Kv v3.3.3-kv.8 价格与系统字段归属修复完成
 - 目标：价格、付费周期、服务商、运行和剩余时间真正归入 system；系统资料开启时不再依赖 identity，并使用新配置键避开 kv.7 旧值污染。
 - 不做：不绕过未登录隐藏价格，不修改 Komari 节点价格数据或权限逻辑。

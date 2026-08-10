@@ -158,6 +158,10 @@ interface CpuTierRule {
 // Ordered broad families cover common VPS, workstation, desktop and ARM hosts.
 // This is a model-generation estimate, not copied benchmark data or a node-side test.
 const CPU_TIER_RULES: CpuTierRule[] = [
+  { pattern: /\b(?:epyc[ -]?)?(?:turin|genoa|bergamo|siena)\b/i, tier: 'S' },
+  { pattern: /\b(?:epyc[ -]?)?milan\b/i, tier: 'A' },
+  { pattern: /\b(?:epyc[ -]?)?rome\b/i, tier: 'B' },
+  { pattern: /\b(?:epyc[ -]?)?naples\b/i, tier: 'C' },
   { pattern: /\b(?:xeon\s+6|xeon\s+[67]\d{3}[ep])\b/i, tier: 'S' },
   { pattern: /\bxeon\s+w[ -]?(?:24|34)\d{2}\b/i, tier: 'S' },
   { pattern: /\bxeon\s+w[ -]?(?:32|33)\d{2}\b/i, tier: 'A' },

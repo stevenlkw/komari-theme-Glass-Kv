@@ -9,6 +9,7 @@ import { useNodeCardSettings } from '@/composables/useNodeCardSettings'
 import { useNodePingDisplay } from '@/composables/useNodePingDisplay'
 import { useNodeProviderMetadata } from '@/composables/useNodeProviderMetadata'
 import { useAppStore } from '@/stores/app'
+import { getCpuBenchmarkRating } from '@/utils/cpuBenchmark'
 import { formatBytesPerSecondWithConfig, formatBytesWithConfig, formatDateTime, getUptimeDays } from '@/utils/helper'
 import { getDiskPercentage, getMemoryPercentage, getTrafficUsed, getTrafficUsedPercentage, hasTrafficLimit } from '@/utils/nodeMetricsHelper'
 import { getOSImage, getOSName } from '@/utils/osImageHelper'
@@ -27,9 +28,17 @@ const emit = defineEmits<{
   click: []
   pingClick: []
 }>()
+const CPU_RATING_CLASS = {
+  'S': 'bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300',
+  'A': 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
+  'B': 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  'C': 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  'D': 'bg-red-500/10 text-red-700 dark:text-red-300',
+  '?': 'bg-slate-500/10 text-muted-foreground',
+} as const
 const appStore = useAppStore()
 const nodeCardSettings = useNodeCardSettings()
-const { showFavorite, showDetailAction, showOfflineMask, showTags } = nodeCardSettings
+const { showFavorite, showDetailAction, showOfflineMask, showRegionFlag, showTags } = nodeCardSettings
 const { getNodeProviderMetadata } = useNodeProviderMetadata({
   nodes: () => [props.node],
   customAliases: () => appStore.providerAliases,
@@ -165,6 +174,10 @@ const remainingInfo = computed(() => {
     danger: days < 10,
   }
 })
+
+const cpuRating = computed(() => getCpuBenchmarkRating(props.node.cpu_name || ''))
+const cpuRatingText = computed(() => cpuRating.value.tier === '?' ? 'CPU 未收录' : `CPU ${cpuRating.value.tier}级`)
+const cpuRatingTooltip = computed(() => `${cpuRating.value.label}：${cpuRating.value.description}\n本地型号近似分级，不代表实测跑分。`)
 
 const parsedTags = computed(() => parseTags(props.node.tags))
 
@@ -333,7 +346,7 @@ function hasRegion(region: string | null | undefined): boolean {
           />
         </div>
         <img
-          v-if="nodeCardSettings.isSectionVisible('identity') && nodeCardSettings.isFieldVisible('identity', 'region') && hasRegion(props.node.region)"
+          v-if="showRegionFlag && hasRegion(props.node.region)"
           :src="`/images/flags/${getRegionCode(props.node.region)}.svg`"
           :alt="getRegionAltText(props.node.region)"
           class="size-5 shrink-0 rounded-sm"
@@ -395,7 +408,7 @@ function hasRegion(region: string | null | undefined): boolean {
           </div>
 
           <div
-            v-if="nodeCardSettings.isFieldVisible('system', 'provider') || (nodeCardSettings.isFieldVisible('system', 'price') && priceAmountText) || (nodeCardSettings.isFieldVisible('system', 'billing') && billingText)"
+            v-if="nodeCardSettings.isFieldVisible('system', 'provider') || nodeCardSettings.isFieldVisible('system', 'os') || (nodeCardSettings.isFieldVisible('system', 'price') && priceAmountText) || (nodeCardSettings.isFieldVisible('system', 'billing') && billingText)"
             class="summary-line"
           >
             <span
@@ -405,6 +418,10 @@ function hasRegion(region: string | null | undefined): boolean {
             >
               <Icon :icon="providerIcon" class="text-violet-500" />
               <span class="truncate">{{ providerText }}</span>
+            </span>
+            <span v-if="nodeCardSettings.isFieldVisible('system', 'os')" class="summary-item">
+              <img :src="getOSImage(props.node.os)" :alt="getOSName(props.node.os)" class="size-3.5 shrink-0">
+              <span>{{ getOSName(props.node.os) }}</span>
             </span>
             <span
               v-if="nodeCardSettings.isFieldVisible('system', 'price') && priceAmountText"
@@ -454,20 +471,25 @@ function hasRegion(region: string | null | undefined): boolean {
           </div>
 
           <div
-            v-if="nodeCardSettings.isSectionVisible('system') && (nodeCardSettings.isFieldVisible('system', 'cpuModel') || nodeCardSettings.isFieldVisible('system', 'os'))"
+            v-if="nodeCardSettings.isFieldVisible('system', 'cpuModel') || nodeCardSettings.isFieldVisible('system', 'cpuRating')"
             class="summary-line"
           >
             <span
               v-if="nodeCardSettings.isFieldVisible('system', 'cpuModel')"
-              class="summary-item min-w-0"
+              class="summary-item summary-item--grow min-w-0"
               :title="props.node.cpu_name || 'CPU 型号未知'"
             >
               <Icon icon="tabler:brand-amd" class="text-fuchsia-500" />
               <span class="truncate">{{ props.node.cpu_name || 'CPU 型号未知' }}</span>
             </span>
-            <span v-if="nodeCardSettings.isFieldVisible('system', 'os')" class="summary-item">
-              <img :src="getOSImage(props.node.os)" :alt="getOSName(props.node.os)" class="size-3.5 shrink-0">
-              <span>{{ getOSName(props.node.os) }}</span>
+            <span
+              v-if="nodeCardSettings.isFieldVisible('system', 'cpuRating')"
+              class="summary-item shrink-0 rounded-md px-1.5 py-0.5 font-semibold"
+              :class="CPU_RATING_CLASS[cpuRating.tier]"
+              :title="cpuRatingTooltip"
+            >
+              <Icon icon="tabler:award" />
+              <span>{{ cpuRatingText }}</span>
             </span>
           </div>
 
@@ -722,6 +744,11 @@ function hasRegion(region: string | null | undefined): boolean {
   flex: 0 0 auto;
   align-items: center;
   gap: 0.3rem;
+}
+
+.summary-item--grow {
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .section-heading {

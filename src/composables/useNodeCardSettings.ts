@@ -1,16 +1,15 @@
 import { computed } from 'vue'
 import { useAppStore } from '@/stores/app'
 
-export type NodeCardSection = 'identity' | 'system' | 'usage' | 'network' | 'quality'
-export type NodeCardFieldGroup = Exclude<NodeCardSection, 'quality'> | 'quality'
+export type NodeCardSection = 'system' | 'usage' | 'network' | 'quality'
+export type NodeCardFieldGroup = NodeCardSection
 export type NodeCardField = string
 
-const SECTION_KEYS: readonly NodeCardSection[] = ['identity', 'system', 'usage', 'network', 'quality']
+const SECTION_KEYS: readonly NodeCardSection[] = ['system', 'usage', 'network', 'quality']
 const KEY_LIST_SEPARATOR = /[\s,，、]+/
 
 const FIELD_KEYS: Record<NodeCardFieldGroup, readonly NodeCardField[]> = {
-  identity: ['region'],
-  system: ['provider', 'price', 'billing', 'cores', 'arch', 'diskTotal', 'trafficLimit', 'bandwidth', 'cpuModel', 'os', 'uptime', 'remaining', 'virtualization'],
+  system: ['provider', 'os', 'price', 'billing', 'cores', 'arch', 'diskTotal', 'trafficLimit', 'bandwidth', 'cpuModel', 'cpuRating', 'uptime', 'remaining', 'virtualization'],
   usage: ['cpu', 'memory', 'swap', 'disk', 'traffic'],
   network: ['uploadSpeed', 'downloadSpeed', 'uploadTotal', 'downloadTotal'],
   quality: ['telecom', 'unicom', 'mobile', 'latency', 'loss', 'history'],
@@ -18,26 +17,24 @@ const FIELD_KEYS: Record<NodeCardFieldGroup, readonly NodeCardField[]> = {
 
 const SECTION_PRESETS: Record<string, readonly NodeCardSection[]> = {
   full: SECTION_KEYS,
-  compact: ['identity', 'system', 'usage', 'quality'],
-  monitor: ['identity', 'system', 'usage', 'network', 'quality'],
-  minimal: ['identity', 'system', 'usage'],
+  compact: ['system', 'usage', 'quality'],
+  monitor: ['system', 'usage', 'network', 'quality'],
+  minimal: ['system', 'usage'],
 }
 
 const FIELD_PRESETS: Record<NodeCardFieldGroup, readonly NodeCardField[]> = {
-  identity: FIELD_KEYS.identity,
   // virtualization 可通过 custom 字段重新启用，默认不占用卡片高度。
-  system: ['provider', 'price', 'billing', 'cores', 'arch', 'diskTotal', 'trafficLimit', 'bandwidth', 'cpuModel', 'os', 'uptime', 'remaining'],
+  system: ['provider', 'os', 'price', 'billing', 'cores', 'arch', 'diskTotal', 'trafficLimit', 'bandwidth', 'cpuModel', 'cpuRating', 'uptime', 'remaining'],
   usage: FIELD_KEYS.usage,
   network: FIELD_KEYS.network,
   quality: FIELD_KEYS.quality,
 }
 
 const FIELD_SETTING_KEYS: Record<NodeCardFieldGroup, string> = {
-  identity: 'nodeCardTitleFields',
-  system: 'nodeCardSystemFieldsV2',
-  usage: 'nodeCardUsageFields',
-  network: 'nodeCardNetworkFields',
-  quality: 'nodeCardQualityFields',
+  system: 'nodeCardSystemFieldsV3',
+  usage: 'nodeCardUsageFieldsV2',
+  network: 'nodeCardNetworkFieldsV2',
+  quality: 'nodeCardQualityFieldsV2',
 }
 
 function parseKeyList(value: unknown, allowed: readonly string[], fallback: readonly string[]): string[] {
@@ -57,13 +54,13 @@ export function useNodeCardSettings() {
   const appStore = useAppStore()
 
   const preset = computed(() => {
-    const value = appStore.themeSettings.nodeCardPreset
+    const value = appStore.themeSettings.nodeCardPresetV2
     return typeof value === 'string' && (value === 'custom' || value in SECTION_PRESETS) ? value : 'full'
   })
 
   const sections = computed<NodeCardSection[]>(() => {
     if (preset.value === 'custom')
-      return parseKeyList(appStore.themeSettings.nodeCardSections, SECTION_KEYS, SECTION_KEYS) as NodeCardSection[]
+      return parseKeyList(appStore.themeSettings.nodeCardSectionsV2, SECTION_KEYS, SECTION_KEYS) as NodeCardSection[]
     return [...(SECTION_PRESETS[preset.value] ?? SECTION_KEYS)]
   })
 
@@ -94,6 +91,7 @@ export function useNodeCardSettings() {
 
   const showFavorite = computed(() => appStore.themeSettings.nodeCardShowFavorite !== false)
   const showDetailAction = computed(() => appStore.themeSettings.nodeCardShowDetailAction !== false)
+  const showRegionFlag = computed(() => appStore.themeSettings.nodeCardShowRegionFlag !== false)
   const showTags = computed(() => appStore.themeSettings.nodeCardShowTags !== false)
   const showOfflineMask = computed(() => appStore.themeSettings.nodeCardShowOfflineMask !== false)
 
@@ -106,6 +104,7 @@ export function useNodeCardSettings() {
     getSectionOrder,
     showFavorite,
     showDetailAction,
+    showRegionFlag,
     showTags,
     showOfflineMask,
   }
