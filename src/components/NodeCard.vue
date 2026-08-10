@@ -7,6 +7,7 @@ import { CardX } from '@/components/ui/card-x'
 import { DataTooltip } from '@/components/ui/data-tooltip'
 import { ProgressThin } from '@/components/ui/progress-thin'
 import { useNodePingDisplay } from '@/composables/useNodePingDisplay'
+import { useNodeProviderMetadata } from '@/composables/useNodeProviderMetadata'
 import { useAppStore } from '@/stores/app'
 import { formatBytesPerSecondWithConfig, formatBytesWithConfig, formatDateTime, getStatus, getUptimeDays } from '@/utils/helper'
 import { getDiskPercentage, getMemoryPercentage, getTrafficUsed, getTrafficUsedPercentage, hasTrafficLimit } from '@/utils/nodeMetricsHelper'
@@ -27,6 +28,11 @@ const emit = defineEmits<{
   pingClick: []
 }>()
 const appStore = useAppStore()
+const { getNodeProviderMetadata } = useNodeProviderMetadata({
+  nodes: () => [props.node],
+  customAliases: () => appStore.providerAliases,
+  allowGeoLookup: false,
+})
 const isFavorite = computed(() => appStore.isFavoriteNode(props.node.uuid))
 
 function toggleFavorite(): void {
@@ -46,6 +52,14 @@ interface RemainingInfoTag {
   prefix?: string
   value?: string
   unit?: string
+  danger?: boolean
+}
+
+interface SystemInfoItem {
+  key: string
+  icon: string
+  text: string
+  title: string
 }
 
 const NODE_METRIC_ICONS = {
@@ -82,6 +96,7 @@ const diskPercentage = computed(() => getDiskPercentage(props.node))
 const diskStatus = computed(() => getStatus(diskPercentage.value))
 
 const {
+  networkRows,
   latencyRenderBars,
   lossRenderBars,
   latencyDisplay,
@@ -142,6 +157,42 @@ const priceText = computed(() => {
   return formatPriceWithCycle(node.price, node.billing_cycle, node.currency, appStore.lang)
 })
 
+const systemInfoItems = computed<SystemInfoItem[]>(() => {
+  const node = props.node
+  const provider = getNodeProviderMetadata(node)?.provider
+  const groupText = node.groups.join(' · ')
+  const providerText = [provider?.displayName, groupText].filter(Boolean).join(' · ') || '未标注服务商'
+  const swapTotal = Math.max(0, node.swap_total ?? 0)
+  const swapPercent = swapTotal > 0 ? Math.max(0, node.swap ?? 0) / swapTotal * 100 : 0
+
+  return [
+    {
+      key: 'provider',
+      icon: provider?.primary.icon ?? 'tabler:building-skyscraper',
+      text: providerText,
+      title: [...(provider?.tooltipLines ?? []), groupText].filter(Boolean).join('\n') || providerText,
+    },
+    {
+      key: 'cpu',
+      icon: 'tabler:cpu',
+      text: `${node.cpu_cores || 0} 核 · ${node.arch || '-'}`,
+      title: [node.cpu_name, `${node.cpu_cores || 0} vCPU`, node.arch].filter(Boolean).join(' · '),
+    },
+    {
+      key: 'system',
+      icon: 'tabler:box',
+      text: [node.virtualization || '物理机', getOSName(node.os)].filter(Boolean).join(' · '),
+      title: [node.virtualization, getOSName(node.os), node.kernel_version].filter(Boolean).join(' · '),
+    },
+    {
+      key: 'swap',
+      icon: 'tabler:arrows-exchange',
+      text: swapTotal > 0 ? `Swap ${swapPercent.toFixed(1)}%` : 'Swap 未配置',
+      title: swapTooltip.value,
+    },
+  ]
+})
+
 // 第三列：剩余天数（始终） + 剩余价值（仅在允许显示金额时），带图标与相邻列对齐
 const remainingInfoTags = computed<RemainingInfoTag[]>(() => {
   const node = props.node
@@ -150,19 +201,20 @@ const remainingInfoTags = computed<RemainingInfoTag[]>(() => {
   const lang = appStore.lang
   const days = getDaysUntilExpired(node.expired_at)
   const status = getExpireStatus(node.expired_at)
+  const isDanger = status === 'expired' || (status !== 'unknown' && status !== 'long_term' && days < 10)
   const items: RemainingInfoTag[] = []
 
   if (status === 'expired') {
-    items.push({ icon: 'tabler:calendar-stats', text: lang === 'zh-CN' ? '已过期' : 'Expired' })
+    items.push({ icon: 'tabler:calendar-stats', text: lang === 'zh-CN' ? '已过期' : 'Expired', danger: true })
   }
   else if (status === 'long_term') {
     items.push({ icon: 'tabler:calendar-stats', text: lang === 'zh-CN' ? '长期' : 'Long-term' })
   }
   else if (lang === 'zh-CN') {
-    items.push({ icon: 'tabler:calendar-stats', prefix: '剩余', value: String(days), unit: '天' })
+    items.push({ icon: 'tabler:calendar-stats', prefix: '剩余', value: String(days), unit: '天', danger: isDanger })
   }
   else {
-    items.push({ icon: 'tabler:calendar-stats', prefix: 'left', value: String(days), unit: 'days' })
+    items.push({ icon: 'tabler:calendar-stats', prefix: 'left', value: String(days), unit: 'days', danger: isDanger })
   }
 
   if (showPrice.value) {
@@ -263,6 +315,19 @@ function hasRegion(region: string | null | undefined): boolean {
           >
             {{ priceText }}
           </span>
+        </div>
+
+        <!-- 服务商与系统资料：保持两列紧凑，不改变原卡片的信息层级 -->
+        <div v-if="!isMiniNodeCard" class="grid grid-cols-2 gap-1.5">
+          <div
+            v-for="item in systemInfoItems"
+            :key="item.key"
+            :title="item.title"
+            class="flex min-w-0 items-center gap-1.5 rounded-lg bg-slate-500/5 px-2 py-1 text-[11px] text-muted-foreground"
+          >
+            <Icon :icon="item.icon" width="12" height="12" class="shrink-0" :class="item.key === 'provider' ? 'text-violet-500' : item.key === 'cpu' ? 'text-sky-500' : item.key === 'system' ? 'text-orange-500' : 'text-emerald-500'" />
+            <span class="min-w-0 truncate">{{ item.text }}</span>
+          </div>
         </div>
 
         <!-- 四项进度条 -->
@@ -417,7 +482,8 @@ function hasRegion(region: string | null | undefined): boolean {
             <template v-if="remainingInfoTags.length">
               <div
                 v-for="(item, i) in remainingInfoTags" :key="i"
-                class="text-[11px] text-muted-foreground flex items-center gap-0.5"
+                class="text-[11px] flex items-center gap-0.5"
+                :class="item.danger ? 'rounded bg-destructive/10 px-1 font-semibold text-destructive' : 'text-muted-foreground'"
               >
                 <Icon :icon="item.icon" width="11" height="11" class="shrink-0" />
                 <span v-if="item.text" class="truncate min-w-0 overflow-hidden">{{ item.text }}</span>
@@ -437,6 +503,27 @@ function hasRegion(region: string | null | undefined): boolean {
               </div>
             </template>
           </div>
+        </div>
+
+        <!-- 三网质量摘要；下方仍保留原主题的聚合延迟/丢包历史短柱 -->
+        <div v-if="!isMiniNodeCard" class="grid grid-cols-3 gap-1.5">
+          <button
+            v-for="network in networkRows"
+            :key="network.key"
+            type="button"
+            :title="network.taskName || `${network.label}暂无 Ping 任务`"
+            class="min-w-0 rounded-lg bg-slate-500/5 px-1.5 py-1 text-left transition-colors hover:bg-slate-500/10"
+            @click.stop="emit('pingClick')"
+          >
+            <div class="flex items-center gap-1 text-[11px] font-medium">
+              <Icon icon="tabler:antenna-bars-5" width="11" height="11" :class="network.key === 'telecom' ? 'text-sky-500' : network.key === 'unicom' ? 'text-violet-500' : 'text-emerald-500'" />
+              <span>{{ network.label }}</span>
+            </div>
+            <div class="mt-0.5 flex items-center justify-between gap-1 text-[10px] tabular-nums" :class="network.available ? 'text-muted-foreground' : 'text-muted-foreground/45'">
+              <span class="inline-flex min-w-0 items-center gap-0.5"><Icon icon="tabler:clock" width="10" height="10" />{{ network.latencyDisplay }}</span>
+              <span class="inline-flex min-w-0 items-center gap-0.5"><Icon icon="tabler:network-off" width="10" height="10" />{{ network.lossDisplay }}</span>
+            </div>
+          </button>
         </div>
 
         <!-- 延迟 + 丢包 -->

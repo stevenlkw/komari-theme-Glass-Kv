@@ -13,6 +13,15 @@ export interface NodePingBar {
   tooltip: string
 }
 
+export interface NodePingNetworkRow {
+  key: 'telecom' | 'unicom' | 'mobile'
+  label: string
+  taskName: string
+  latencyDisplay: string
+  lossDisplay: string
+  available: boolean
+}
+
 interface UseNodePingDisplayOptions {
   enabled?: MaybeRefOrGetter<boolean>
   loadingDisplayText?: string
@@ -22,6 +31,12 @@ interface UseNodePingDisplayOptions {
 }
 
 const EMPTY_PING_BAR_COUNT = 20
+
+const PING_NETWORKS = [
+  { key: 'telecom', label: '电信', pattern: /(电信|telecom|chinanet|ctcc|ctg)/i },
+  { key: 'unicom', label: '联通', pattern: /(联通|unicom|cucc|cuii)/i },
+  { key: 'mobile', label: '移动', pattern: /(移动|mobile|cmcc|cmi)/i },
+] as const
 
 function getLatencyToneClass(latency: number): string {
   if (latency <= 60)
@@ -137,6 +152,29 @@ export function useNodePingDisplay(
     return options.emptyDisplayText ?? '-'
   })
 
+  const networkRows = computed<NodePingNetworkRow[]>(() => PING_NETWORKS.map((network) => {
+    const task = pingStats.taskStats.value.find(item => network.pattern.test(item.taskName))
+    if (!task) {
+      return {
+        key: network.key,
+        label: network.label,
+        taskName: '',
+        latencyDisplay: '-',
+        lossDisplay: '-',
+        available: false,
+      }
+    }
+
+    return {
+      key: network.key,
+      label: network.label,
+      taskName: task.taskName,
+      latencyDisplay: `${Math.round(task.avgLatency)} ms`,
+      lossDisplay: `${task.avgLoss.toFixed(1)}%`,
+      available: true,
+    }
+  }))
+
   const latencyPanelTooltip = computed(() => {
     if (!pingStats.hasData.value) {
       if (pingStats.loading.value)
@@ -163,6 +201,7 @@ export function useNodePingDisplay(
     pingStats,
     pingStatsEnabled,
     pingStatsHours,
+    networkRows,
     latencyRenderBars,
     lossRenderBars,
     latencyDisplay,

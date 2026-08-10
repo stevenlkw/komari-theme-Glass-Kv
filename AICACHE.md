@@ -12,6 +12,16 @@
 
 ## 当前任务
 
+- 状态：done，Kv 定制版构建与归档验证完成
+- 目标：以官方 Glassmorphism v3.3.3 为底板，在不改变默认 compact 密度和原有后台路由的前提下补充节点卡片资料。
+- 里程碑：M4 UI/UX 小范围展示增强；不引入新依赖，不新增业务请求。
+- 范围：服务商/分组、CPU 核心/架构/型号提示、虚拟化/系统、可见 Swap、剩余不足 10 天警示，以及复用同一 Ping 响应的电信/联通/移动摘要。
+- 视觉边界：保留原毛玻璃、两列资源进度、三列网络统计、聚合延迟/丢包离散短柱；不迁移旧 Apple Blue 大分区卡片。
+- 发布契约：作者 Kv，short 为 GlassKv，独立 ZIP 必须包含 komari-theme.json、preview.png、dist/。
+- 上游归属：基于 sanrokamlan-prog/komari-theme-Glassmorphism（MIT），manifest 保留上游 URL。
+- 验证：Bun 1.3.14 下 `bun run lint`、`bun run build`、`git diff --check` 均通过。
+- 成品：`Komari-Glass-Kv-3.3.3-kv.1.zip`；归档内 manifest、preview.png、dist/index.html 已核对。
+
 - 状态：in-progress，v3.3.3 实现完成，正在执行最终验证与发布
 - 目标：统一 Komari `price = -1` 免费节点语义，移除“免费 / 周期”文案，并让单节点剩余价值显示“无 / N/A”。
 - 里程碑：M4 UI/UX + 小范围业务展示修复；金额计算继续返回数值，不把 `NaN` 作为业务状态。
