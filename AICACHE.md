@@ -12,6 +12,12 @@
 
 ## 当前任务
 
+- 状态：done，Glass Kv v3.3.3-kv.12 硬盘容量位置调整完成
+- 目标：将首页硬盘总量移到服务商与操作系统所在的第一行，缩短核心、内存、流量和带宽所在第二行，避免窄卡片溢出。
+- 不做：不改变 `diskTotal` 后台字段、硬盘数据来源、卡片高度或其他系统资料顺序。
+- 验证：Impeccable 布局检测零告警；改动文件 ESLint、`bun run build`、Vue 严格类型检查和 `git diff --check` 通过；归档包含 manifest、preview.png、dist/index.html。
+- 成品：`Komari-Glass-Kv-3.3.3-kv.12.zip`，manifest 版本 3.3.3-kv.12，SHA-256 为 `0E6E081DE6D2E2301900D9992942BD967D16C7DB2484A0B091A232CBB72F0225`。
+
 - 状态：done，Glass Kv v3.3.3-kv.11 内存总量显示与架构字段移除完成
 - 目标：首页系统资料不再显示 amd64 等架构文字；在同一容量摘要行新增由 Komari `mem_total` 提供的内存总量，并同步后台字段为 `memoryTotal`。
 - 不做：不新增数据请求，不修改内存使用率或详情页，不保留无实际展示价值的首页架构字段。

@@ -408,7 +408,7 @@ function hasRegion(region: string | null | undefined): boolean {
           </div>
 
           <div
-            v-if="nodeCardSettings.isFieldVisible('system', 'provider') || nodeCardSettings.isFieldVisible('system', 'os')"
+            v-if="nodeCardSettings.isFieldVisible('system', 'provider') || nodeCardSettings.isFieldVisible('system', 'os') || nodeCardSettings.isFieldVisible('system', 'diskTotal')"
             class="summary-line"
           >
             <span
@@ -423,10 +423,14 @@ function hasRegion(region: string | null | undefined): boolean {
               <img :src="getOSImage(props.node.os)" :alt="getOSName(props.node.os)" class="size-3.5 shrink-0">
               <span>{{ getOSName(props.node.os) }}</span>
             </span>
+            <span v-if="nodeCardSettings.isFieldVisible('system', 'diskTotal')" class="summary-item">
+              <Icon icon="tabler:server-2" class="text-orange-500" />
+              <span>硬盘 {{ formatBytes(props.node.disk_total ?? 0) }}</span>
+            </span>
           </div>
 
           <div
-            v-if="nodeCardSettings.isSectionVisible('system') && (nodeCardSettings.isFieldVisible('system', 'cores') || nodeCardSettings.isFieldVisible('system', 'memoryTotal') || nodeCardSettings.isFieldVisible('system', 'diskTotal') || nodeCardSettings.isFieldVisible('system', 'trafficLimit') || nodeCardSettings.isFieldVisible('system', 'bandwidth') || nodeCardSettings.isFieldVisible('system', 'virtualization'))"
+            v-if="nodeCardSettings.isSectionVisible('system') && (nodeCardSettings.isFieldVisible('system', 'cores') || nodeCardSettings.isFieldVisible('system', 'memoryTotal') || nodeCardSettings.isFieldVisible('system', 'trafficLimit') || nodeCardSettings.isFieldVisible('system', 'bandwidth') || nodeCardSettings.isFieldVisible('system', 'virtualization'))"
             class="summary-line"
           >
             <span v-if="nodeCardSettings.isFieldVisible('system', 'cores')" class="summary-item">
@@ -436,10 +440,6 @@ function hasRegion(region: string | null | undefined): boolean {
             <span v-if="nodeCardSettings.isFieldVisible('system', 'memoryTotal')" class="summary-item">
               <Icon icon="icon-park-outline:memory" class="text-emerald-500" />
               <span>内存 {{ formatBytes(props.node.mem_total ?? 0) }}</span>
-            </span>
-            <span v-if="nodeCardSettings.isFieldVisible('system', 'diskTotal')" class="summary-item">
-              <Icon icon="tabler:server-2" class="text-orange-500" />
-              <span>硬盘 {{ formatBytes(props.node.disk_total ?? 0) }}</span>
             </span>
             <span v-if="nodeCardSettings.isFieldVisible('system', 'trafficLimit')" class="summary-item">
               <Icon icon="tabler:arrows-transfer-up-down" class="text-violet-500" />
