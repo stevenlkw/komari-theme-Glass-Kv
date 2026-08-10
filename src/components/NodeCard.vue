@@ -251,11 +251,39 @@ function networkQualityLevel(latencyDisplay: string, lossDisplay: string, availa
   return 5 - Math.max(latencyGrade, lossGrade)
 }
 
-const displayNetworkRows = computed(() => networkRows.value.map(row => ({
-  ...row,
-  route: getMetadataTagValue(NETWORK_TAG_PATTERNS[row.key]),
-  qualityLevel: networkQualityLevel(row.latencyDisplay, row.lossDisplay, row.available),
-})))
+const displayNetworkRows = computed(() => networkRows.value.map((row) => {
+  const qualityLevel = networkQualityLevel(row.latencyDisplay, row.lossDisplay, row.available)
+  const loss = Number.parseFloat(row.lossDisplay)
+  const qualityClass = qualityLevel >= 5
+    ? 'bg-emerald-500'
+    : qualityLevel === 4
+      ? 'bg-lime-500'
+      : qualityLevel === 3
+        ? 'bg-amber-400'
+        : qualityLevel === 2
+          ? 'bg-orange-500'
+          : 'bg-rose-500'
+  const lossClass = !row.available || !Number.isFinite(loss)
+    ? 'text-muted-foreground/45'
+    : loss <= 1
+      ? 'text-emerald-600 dark:text-emerald-400'
+      : loss <= 3
+        ? 'text-lime-600 dark:text-lime-400'
+        : loss <= 6
+          ? 'text-amber-600 dark:text-amber-400'
+          : 'text-rose-600 dark:text-rose-400'
+
+  return {
+    ...row,
+    route: getMetadataTagValue(NETWORK_TAG_PATTERNS[row.key]),
+    qualityLevel,
+    qualityClass,
+    lossClass,
+    qualityTooltip: row.available
+      ? `任务：${row.taskName}\n综合质量：${qualityLevel}/5（延迟 ${row.latencyDisplay}，丢包 ${row.lossDisplay}）\n短柱表示综合线路质量，不代表网速。`
+      : `${row.label}暂无 Ping 任务；线路名可通过节点标签配置`,
+  }
+}))
 
 const customTags = computed(() => parsedTags.value.filter(tag => !METADATA_TAG_PATTERN.test(tag.text)).map(tag => tag.text))
 
@@ -440,33 +468,35 @@ function hasRegion(region: string | null | undefined): boolean {
           </div>
         </div>
 
-        <!-- 三网线路质量；五格短柱使用与 Ping 相同的延迟/丢包等级 -->
+        <!-- 三网线路质量；五格短柱表示延迟与丢包合并后的质量，不表示网速 -->
         <div v-if="!isMiniNodeCard" class="space-y-1.5">
           <button
             v-for="network in displayNetworkRows"
             :key="network.key"
             type="button"
-            :title="network.taskName || `${network.label}暂无 Ping 任务；线路名可通过节点标签配置`"
+            :title="network.qualityTooltip"
+            :aria-label="`${network.label}${network.route ? ` ${network.route}` : ''}：延迟 ${network.latencyDisplay}，丢包 ${network.lossDisplay}，综合质量 ${network.qualityLevel}/5`"
             class="network-quality-row"
             @click.stop="emit('pingClick')"
           >
             <div class="flex min-w-0 items-center gap-1 text-[11px] font-medium">
-              <Icon icon="tabler:antenna-bars-5" width="12" height="12" :class="network.key === 'telecom' ? 'text-sky-500' : network.key === 'unicom' ? 'text-violet-500' : 'text-emerald-500'" />
+              <Icon icon="tabler:route" width="12" height="12" :class="network.key === 'telecom' ? 'text-sky-500' : network.key === 'unicom' ? 'text-violet-500' : 'text-emerald-500'" />
               <span class="shrink-0">{{ network.label }}</span>
               <span class="truncate text-muted-foreground">{{ network.route || '-' }}</span>
             </div>
-            <div class="flex items-center gap-2 text-[10px] tabular-nums" :class="network.available ? 'text-muted-foreground' : 'text-muted-foreground/45'">
-              <span class="inline-flex items-center gap-0.5"><Icon icon="tabler:clock" />{{ network.latencyDisplay }}</span>
-              <span class="inline-flex items-center gap-0.5"><Icon icon="tabler:network-off" />{{ network.lossDisplay }}</span>
+            <div class="flex items-center gap-2 text-[10px] tabular-nums">
+              <span class="inline-flex items-center gap-0.5" :class="network.available ? 'text-muted-foreground' : 'text-muted-foreground/45'"><Icon icon="tabler:clock" />{{ network.latencyDisplay }}</span>
+              <span class="inline-flex items-center gap-0.5" :class="network.lossClass"><Icon icon="tabler:percentage" />{{ network.lossDisplay }}</span>
             </div>
-            <div class="quality-bars" aria-hidden="true">
-              <span
-                v-for="bar in 5"
-                :key="bar"
-                :class="bar <= network.qualityLevel
-                  ? network.key === 'telecom' ? 'bg-sky-500' : network.key === 'unicom' ? 'bg-violet-500' : 'bg-emerald-500'
-                  : 'bg-slate-500/12'"
-              />
+            <div class="network-quality-meter" :title="network.qualityTooltip">
+              <span class="network-quality-label">质量</span>
+              <div class="quality-bars" aria-hidden="true">
+                <span
+                  v-for="bar in 5"
+                  :key="bar"
+                  :class="bar <= network.qualityLevel ? network.qualityClass : 'bg-slate-500/12'"
+                />
+              </div>
             </div>
           </button>
         </div>
@@ -688,7 +718,7 @@ function hasRegion(region: string | null | undefined): boolean {
   display: grid;
   width: 100%;
   min-width: 0;
-  grid-template-columns: minmax(0, 1fr) auto 3.25rem;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 0.55rem;
   border-radius: 0.55rem;
@@ -711,9 +741,23 @@ function hasRegion(region: string | null | undefined): boolean {
   flex: 0 0 auto;
 }
 
+.network-quality-meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.network-quality-label {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.625rem;
+  white-space: nowrap;
+}
+
 .quality-bars {
   display: grid;
   height: 0.95rem;
+  width: 3.25rem;
+  flex: 0 0 3.25rem;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: end;
   gap: 2px;
