@@ -1,0 +1,13 @@
+{
+  "date": "2026-08-10",
+  "framework": "Vue 3 + Vite 7",
+  "styling": "Tailwind CSS 4 + src/styles/main.css tokens",
+  "motion": "CSS transitions and tw-animate-css; no dedicated motion library",
+  "spacing": "Tailwind 4-point-derived utility scale",
+  "preserve": [
+    "managed Komari theme configuration",
+    "glass color presets and custom colors",
+    "light/dark mode",
+    "existing service/composable/store layers"
+  ]
+}

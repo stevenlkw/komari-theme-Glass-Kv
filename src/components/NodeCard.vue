@@ -5,6 +5,7 @@ import { computed } from 'vue'
 import { Badge } from '@/components/ui/badge'
 import { CardX } from '@/components/ui/card-x'
 import { DataTooltip } from '@/components/ui/data-tooltip'
+import { useNodeCardSettings } from '@/composables/useNodeCardSettings'
 import { useNodePingDisplay } from '@/composables/useNodePingDisplay'
 import { useNodeProviderMetadata } from '@/composables/useNodeProviderMetadata'
 import { useAppStore } from '@/stores/app'
@@ -27,10 +28,14 @@ const emit = defineEmits<{
   pingClick: []
 }>()
 const appStore = useAppStore()
+const nodeCardSettings = useNodeCardSettings()
+const { showFavorite, showDetailAction, showOfflineMask, showTags } = nodeCardSettings
 const { getNodeProviderMetadata } = useNodeProviderMetadata({
   nodes: () => [props.node],
   customAliases: () => appStore.providerAliases,
-  enabled: () => appStore.nodeCardSize !== 'mini',
+  enabled: () => appStore.nodeCardSize !== 'mini'
+    && nodeCardSettings.isSectionVisible('identity')
+    && nodeCardSettings.isFieldVisible('identity', 'provider'),
   allowGeoLookup: () => appStore.privateFeaturesAllowed,
   geoPermission: 'providerGeoLookup',
 })
@@ -104,7 +109,9 @@ const {
   lossDisplay,
   latencyPanelTooltip,
   lossPanelTooltip,
-} = useNodePingDisplay(() => props.node.uuid, { enabled: () => props.pingEnabled })
+} = useNodePingDisplay(() => props.node.uuid, {
+  enabled: () => props.pingEnabled && nodeCardSettings.isSectionVisible('quality'),
+})
 
 const trafficUsedPercentage = computed(() => getTrafficUsedPercentage(props.node))
 const trafficUsed = computed(() => getTrafficUsed(props.node))
@@ -193,8 +200,8 @@ function getMetricFillClass(baseClass: string, percentage: number): string {
   return baseClass
 }
 
-const resourceMetrics = computed<ResourceMetric[]>(() => [
-  {
+const resourceMetrics = computed<ResourceMetric[]>(() => {
+  const metrics: ResourceMetric[] = [{
     key: 'cpu',
     label: 'CPU',
     icon: NODE_METRIC_ICONS.cpu,
@@ -203,8 +210,7 @@ const resourceMetrics = computed<ResourceMetric[]>(() => [
     iconClass: 'text-sky-500',
     fillClass: getMetricFillClass('metric-fill--cpu', props.node.cpu ?? 0),
     title: [props.node.cpu_name, `负载 ${(props.node.load ?? 0).toFixed(2)} / ${(props.node.load5 ?? 0).toFixed(2)} / ${(props.node.load15 ?? 0).toFixed(2)}`].filter(Boolean).join('\n'),
-  },
-  {
+  }, {
     key: 'memory',
     label: '内存',
     icon: NODE_METRIC_ICONS.memory,
@@ -213,8 +219,7 @@ const resourceMetrics = computed<ResourceMetric[]>(() => [
     iconClass: 'text-emerald-500',
     fillClass: getMetricFillClass('metric-fill--memory', memPercentage.value),
     title: `${formatBytes(props.node.ram ?? 0)} / ${formatBytes(props.node.mem_total ?? 0)}`,
-  },
-  {
+  }, {
     key: 'swap',
     label: 'Swap',
     icon: NODE_METRIC_ICONS.swap,
@@ -223,8 +228,7 @@ const resourceMetrics = computed<ResourceMetric[]>(() => [
     iconClass: 'text-amber-500',
     fillClass: getMetricFillClass('metric-fill--swap', swapPercentage.value),
     title: swapTooltip.value,
-  },
-  {
+  }, {
     key: 'disk',
     label: '硬盘',
     icon: NODE_METRIC_ICONS.disk,
@@ -233,8 +237,7 @@ const resourceMetrics = computed<ResourceMetric[]>(() => [
     iconClass: 'text-orange-500',
     fillClass: getMetricFillClass('metric-fill--disk', diskPercentage.value),
     title: `${formatBytes(props.node.disk ?? 0)} / ${formatBytes(props.node.disk_total ?? 0)}`,
-  },
-  {
+  }, {
     key: 'traffic',
     label: '流量',
     icon: NODE_METRIC_ICONS.traffic,
@@ -243,8 +246,9 @@ const resourceMetrics = computed<ResourceMetric[]>(() => [
     iconClass: 'text-violet-500',
     fillClass: getMetricFillClass('metric-fill--traffic', trafficUsedPercentage.value),
     title: `${formatBytes(trafficUsed.value)} / ${trafficLimitText.value}`,
-  },
-])
+  }]
+  return metrics.filter(metric => nodeCardSettings.isFieldVisible('usage', metric.key))
+})
 
 function networkQualityLevel(latencyDisplay: string, lossDisplay: string, available: boolean): number {
   if (!available)
@@ -288,7 +292,7 @@ const displayNetworkRows = computed(() => networkRows.value.map((row) => {
       ? `任务：${row.taskName}\n综合质量：${qualityLevel}/5（延迟 ${row.latencyDisplay}，丢包 ${row.lossDisplay}）\n短柱表示综合线路质量，不代表网速。`
       : `${row.label}暂无 Ping 任务；线路名可通过节点标签配置`,
   }
-}))
+}).filter(row => nodeCardSettings.isFieldVisible('quality', row.key)))
 
 const customTags = computed(() => parsedTags.value.filter(tag => !isNodeDisplayMetadataTag(tag.text)).map(tag => tag.text))
 
@@ -329,7 +333,7 @@ function hasRegion(region: string | null | undefined): boolean {
           />
         </div>
         <img
-          v-if="hasRegion(props.node.region)"
+          v-if="nodeCardSettings.isSectionVisible('identity') && nodeCardSettings.isFieldVisible('identity', 'region') && hasRegion(props.node.region)"
           :src="`/images/flags/${getRegionCode(props.node.region)}.svg`"
           :alt="getRegionAltText(props.node.region)"
           class="size-5 shrink-0 rounded-sm"
@@ -352,6 +356,7 @@ function hasRegion(region: string | null | undefined): boolean {
     <template #header-extra>
       <div class="flex gap-1.5 items-center shrink-0">
         <button
+          v-if="showFavorite"
           type="button"
           class="inline-flex size-5 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-slate-500/10 hover:text-amber-500"
           :class="isFavorite && 'text-amber-500'"
@@ -363,6 +368,7 @@ function hasRegion(region: string | null | undefined): boolean {
           <Icon :icon="isFavorite ? 'tabler:star-filled' : 'tabler:star'" width="14" height="14" />
         </button>
         <button
+          v-if="showDetailAction"
           type="button"
           class="inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-slate-500/10 hover:text-primary"
           :aria-label="`查看 ${props.node.name} 详情`"
@@ -377,47 +383,53 @@ function hasRegion(region: string | null | undefined): boolean {
 
     <template #default>
       <div class="flex flex-col relative" :class="nodeCardContentClass">
-        <!-- 三行服务器资料，保持单向阅读顺序 -->
-        <div v-if="!isMiniNodeCard" class="server-summary -mt-1 space-y-1.5 rounded-xl bg-slate-500/5 px-2.5 py-2 text-[11px] text-muted-foreground">
-          <div class="summary-line" :title="providerTooltip">
-            <Icon :icon="providerIcon" class="text-violet-500" />
-            <span>{{ providerText }}</span>
-            <span class="summary-separator">·</span>
-            <img :src="getOSImage(props.node.os)" :alt="getOSName(props.node.os)" class="size-3.5 shrink-0">
-            <span>{{ getOSName(props.node.os) }}</span>
-            <span class="summary-separator">·</span>
-            <Icon icon="tabler:gauge" class="text-cyan-500" />
-            <span>带宽 {{ bandwidthText }}</span>
-          </div>
-          <div class="summary-line" :title="[props.node.cpu_name, props.node.kernel_version].filter(Boolean).join('\n')">
-            <Icon icon="tabler:cpu" class="text-sky-500" />
-            <span>{{ props.node.cpu_cores || 0 }} 核 · {{ props.node.arch || '-' }}</span>
-            <span class="summary-separator">·</span>
-            <Icon icon="tabler:server-2" class="text-orange-500" />
-            <span>硬盘 {{ formatBytes(props.node.disk_total ?? 0) }}</span>
-            <span class="summary-separator">·</span>
-            <Icon icon="tabler:arrows-transfer-up-down" class="text-violet-500" />
-            <span>流量 {{ trafficLimitText }}</span>
-          </div>
+        <!-- 服务器资料由托管主题设置决定区块、字段和顺序。 -->
+        <div
+          v-if="!isMiniNodeCard && nodeCardSettings.isSectionVisible('identity')"
+          class="server-summary -mt-1 space-y-1.5 rounded-xl bg-slate-500/5 px-2.5 py-2 text-[11px] text-muted-foreground"
+          :style="{ order: nodeCardSettings.getSectionOrder('identity') }"
+        >
           <div class="summary-line">
-            <template v-if="priceAmountText">
-              <span class="inline-flex shrink-0 items-center gap-1 rounded-md bg-emerald-500/15 px-1.5 py-0.5 font-semibold text-emerald-700 dark:text-emerald-300">
-                <Icon icon="tabler:coin" />
-                <span>{{ priceAmountText }}</span>
-              </span>
-            </template>
-            <template v-if="billingText">
-              <span class="inline-flex shrink-0 items-center gap-1 rounded-md bg-amber-500/15 px-1.5 py-0.5 font-semibold text-amber-700 dark:text-amber-300">
-                <Icon icon="tabler:calendar-repeat" />
-                <span>{{ billingText }}</span>
-              </span>
-            </template>
-            <span v-if="priceAmountText || billingText" class="summary-separator">·</span>
-            <Icon icon="tabler:clock-play" class="text-teal-500" />
-            <span>{{ uptimeDaysText }}</span>
-            <span class="summary-separator">·</span>
             <span
-              class="inline-flex items-center gap-1 rounded-md px-1"
+              v-if="nodeCardSettings.isFieldVisible('identity', 'provider')"
+              class="summary-item min-w-0"
+              :title="providerTooltip"
+            >
+              <Icon :icon="providerIcon" class="text-violet-500" />
+              <span class="truncate">{{ providerText }}</span>
+            </span>
+            <span v-if="nodeCardSettings.isFieldVisible('identity', 'os')" class="summary-item">
+              <img :src="getOSImage(props.node.os)" :alt="getOSName(props.node.os)" class="size-3.5 shrink-0">
+              <span>{{ getOSName(props.node.os) }}</span>
+            </span>
+            <span v-if="nodeCardSettings.isFieldVisible('identity', 'bandwidth')" class="summary-item">
+              <Icon icon="tabler:gauge" class="text-cyan-500" />
+              <span>带宽 {{ bandwidthText }}</span>
+            </span>
+          </div>
+
+          <div class="summary-line">
+            <span
+              v-if="nodeCardSettings.isFieldVisible('identity', 'price') && priceAmountText"
+              class="inline-flex shrink-0 items-center gap-1 rounded-md bg-emerald-500/15 px-1.5 py-0.5 font-semibold text-emerald-700 dark:text-emerald-300"
+            >
+              <Icon icon="tabler:coin" />
+              <span>{{ priceAmountText }}</span>
+            </span>
+            <span
+              v-if="nodeCardSettings.isFieldVisible('identity', 'billing') && billingText"
+              class="inline-flex shrink-0 items-center gap-1 rounded-md bg-amber-500/15 px-1.5 py-0.5 font-semibold text-amber-700 dark:text-amber-300"
+            >
+              <Icon icon="tabler:calendar-repeat" />
+              <span>{{ billingText }}</span>
+            </span>
+            <span v-if="nodeCardSettings.isFieldVisible('identity', 'uptime')" class="summary-item">
+              <Icon icon="tabler:clock-play" class="text-teal-500" />
+              <span>{{ uptimeDaysText }}</span>
+            </span>
+            <span
+              v-if="nodeCardSettings.isFieldVisible('identity', 'remaining')"
+              class="summary-item rounded-md px-1"
               :class="remainingInfo.danger ? 'bg-destructive/10 font-semibold text-destructive' : ''"
             >
               <Icon icon="tabler:hourglass" class="text-amber-500" />
@@ -426,8 +438,76 @@ function hasRegion(region: string | null | undefined): boolean {
           </div>
         </div>
 
+        <div
+          v-if="!isMiniNodeCard && nodeCardSettings.isSectionVisible('system')"
+          class="server-summary space-y-1.5 rounded-xl bg-slate-500/5 px-2.5 py-2 text-[11px] text-muted-foreground"
+          :style="{ order: nodeCardSettings.getSectionOrder('system') }"
+        >
+          <div class="section-heading">
+            <Icon icon="tabler:server-cog" class="text-violet-500" />
+            <span>系统资料</span>
+          </div>
+          <div class="summary-line">
+            <span
+              v-if="nodeCardSettings.isFieldVisible('system', 'cores') || nodeCardSettings.isFieldVisible('system', 'arch')"
+              class="summary-item"
+            >
+              <Icon icon="tabler:cpu" class="text-sky-500" />
+              <span v-if="nodeCardSettings.isFieldVisible('system', 'cores')">{{ props.node.cpu_cores || 0 }} 核</span>
+              <span v-if="nodeCardSettings.isFieldVisible('system', 'cores') && nodeCardSettings.isFieldVisible('system', 'arch')">·</span>
+              <span v-if="nodeCardSettings.isFieldVisible('system', 'arch')">{{ props.node.arch || '-' }}</span>
+            </span>
+            <span v-if="nodeCardSettings.isFieldVisible('system', 'diskTotal')" class="summary-item">
+              <Icon icon="tabler:server-2" class="text-orange-500" />
+              <span>硬盘 {{ formatBytes(props.node.disk_total ?? 0) }}</span>
+            </span>
+            <span v-if="nodeCardSettings.isFieldVisible('system', 'trafficLimit')" class="summary-item">
+              <Icon icon="tabler:arrows-transfer-up-down" class="text-violet-500" />
+              <span>流量 {{ trafficLimitText }}</span>
+            </span>
+            <span v-if="nodeCardSettings.isFieldVisible('system', 'bandwidth')" class="summary-item">
+              <Icon icon="tabler:gauge" class="text-cyan-500" />
+              <span>带宽 {{ bandwidthText }}</span>
+            </span>
+            <span v-if="nodeCardSettings.isFieldVisible('system', 'virtualization')" class="summary-item">
+              <Icon icon="tabler:box" class="text-orange-500" />
+              <span>{{ props.node.virtualization || '物理机' }}</span>
+            </span>
+          </div>
+
+          <div
+            v-if="nodeCardSettings.isFieldVisible('system', 'cpuModel') || nodeCardSettings.isFieldVisible('system', 'kernel')"
+            class="summary-line"
+          >
+            <span
+              v-if="nodeCardSettings.isFieldVisible('system', 'cpuModel')"
+              class="summary-item min-w-0"
+              :title="props.node.cpu_name || 'CPU 型号未知'"
+            >
+              <Icon icon="tabler:brand-amd" class="text-fuchsia-500" />
+              <span class="truncate">{{ props.node.cpu_name || 'CPU 型号未知' }}</span>
+            </span>
+            <span
+              v-if="nodeCardSettings.isFieldVisible('system', 'kernel')"
+              class="summary-item min-w-0"
+              :title="props.node.kernel_version || '内核未知'"
+            >
+              <Icon icon="tabler:terminal-2" class="text-teal-500" />
+              <span class="truncate">{{ props.node.kernel_version || '内核未知' }}</span>
+            </span>
+          </div>
+        </div>
+
         <!-- 资源使用：固定标签列 + 宽进度轨道 -->
-        <div class="space-y-2">
+        <div
+          v-if="nodeCardSettings.isSectionVisible('usage') && resourceMetrics.length > 0"
+          class="space-y-2"
+          :style="{ order: nodeCardSettings.getSectionOrder('usage') }"
+        >
+          <div class="section-heading">
+            <Icon icon="tabler:activity-heartbeat" class="text-sky-500" />
+            <span>使用情况</span>
+          </div>
           <div
             v-for="metric in resourceMetrics"
             :key="metric.key"
@@ -450,23 +530,31 @@ function hasRegion(region: string | null | undefined): boolean {
         </div>
 
         <!-- 实时网速与累计流量 -->
-        <div class="grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl bg-slate-500/5 px-2.5 py-2 text-[11px]">
-          <div class="network-value text-emerald-500">
+        <div
+          v-if="nodeCardSettings.isSectionVisible('network')"
+          class="grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl bg-slate-500/5 px-2.5 py-2 text-[11px]"
+          :style="{ order: nodeCardSettings.getSectionOrder('network') }"
+        >
+          <div class="section-heading col-span-2">
+            <Icon icon="tabler:arrows-transfer-up" class="text-emerald-500" />
+            <span>网络流量</span>
+          </div>
+          <div v-if="nodeCardSettings.isFieldVisible('network', 'uploadSpeed')" class="network-value text-emerald-500">
             <Icon icon="tabler:arrow-up" />
             <span class="text-muted-foreground">实时上传</span>
             <strong>{{ formatBytesPerSecond(props.node.net_out ?? 0) }}</strong>
           </div>
-          <div class="network-value text-blue-500">
+          <div v-if="nodeCardSettings.isFieldVisible('network', 'downloadSpeed')" class="network-value text-blue-500">
             <Icon icon="tabler:arrow-down" />
             <span class="text-muted-foreground">实时下载</span>
             <strong>{{ formatBytesPerSecond(props.node.net_in ?? 0) }}</strong>
           </div>
-          <div class="network-value text-teal-500">
+          <div v-if="nodeCardSettings.isFieldVisible('network', 'uploadTotal')" class="network-value text-teal-500">
             <Icon icon="tabler:upload" />
             <span class="text-muted-foreground">累计上传</span>
             <strong>{{ formatBytes(props.node.net_total_up ?? 0) }}</strong>
           </div>
-          <div class="network-value text-indigo-500">
+          <div v-if="nodeCardSettings.isFieldVisible('network', 'downloadTotal')" class="network-value text-indigo-500">
             <Icon icon="tabler:download" />
             <span class="text-muted-foreground">累计下载</span>
             <strong>{{ formatBytes(props.node.net_total_down ?? 0) }}</strong>
@@ -474,7 +562,15 @@ function hasRegion(region: string | null | undefined): boolean {
         </div>
 
         <!-- 三网线路质量；五格短柱表示延迟与丢包合并后的质量，不表示网速 -->
-        <div v-if="!isMiniNodeCard" class="space-y-1.5">
+        <div
+          v-if="!isMiniNodeCard && nodeCardSettings.isSectionVisible('quality') && displayNetworkRows.length > 0"
+          class="space-y-1.5"
+          :style="{ order: nodeCardSettings.getSectionOrder('quality') }"
+        >
+          <div class="section-heading">
+            <Icon icon="tabler:route" class="text-fuchsia-500" />
+            <span>三网网络质量</span>
+          </div>
           <button
             v-for="network in displayNetworkRows"
             :key="network.key"
@@ -507,8 +603,17 @@ function hasRegion(region: string | null | undefined): boolean {
         </div>
 
         <!-- 综合延迟 + 综合丢包真实历史 -->
-        <div class="grid grid-cols-2 gap-1.5">
+        <div
+          v-if="nodeCardSettings.isSectionVisible('quality') && (nodeCardSettings.isFieldVisible('quality', 'latency') || nodeCardSettings.isFieldVisible('quality', 'loss'))"
+          class="grid grid-cols-2 gap-1.5"
+          :style="{ order: nodeCardSettings.getSectionOrder('quality') }"
+        >
+          <div v-if="displayNetworkRows.length === 0" class="section-heading col-span-2">
+            <Icon icon="tabler:chart-line" class="text-fuchsia-500" />
+            <span>网络质量趋势</span>
+          </div>
           <button
+            v-if="nodeCardSettings.isFieldVisible('quality', 'latency')"
             type="button"
             class="group/panel relative flex flex-col rounded-lg bg-slate-500/5"
             :class="[nodeCardPingPanelClass, nodeCardPanelClass, !props.node.online ? 'blur-xs opacity-50' : '']"
@@ -521,6 +626,7 @@ function hasRegion(region: string | null | undefined): boolean {
               <span class="font-medium">{{ latencyDisplay }}</span>
             </div>
             <div
+              v-if="nodeCardSettings.isFieldVisible('quality', 'history')"
               data-node-ping-bars="latency"
               class="grid min-h-0 min-w-0 w-full flex-1 items-end gap-[1px] opacity-80 group-hover/panel:opacity-100"
               :style="{ gridTemplateColumns: `repeat(${latencyRenderBars.length}, minmax(0, 1fr))` }"
@@ -538,6 +644,7 @@ function hasRegion(region: string | null | undefined): boolean {
           </button>
 
           <button
+            v-if="nodeCardSettings.isFieldVisible('quality', 'loss')"
             type="button"
             class="group/panel relative flex flex-col rounded-lg bg-slate-500/5"
             :class="[nodeCardPingPanelClass, nodeCardPanelClass, !props.node.online ? 'blur-xs opacity-50' : '']"
@@ -550,6 +657,7 @@ function hasRegion(region: string | null | undefined): boolean {
               <span class="font-medium">{{ lossDisplay }}</span>
             </div>
             <div
+              v-if="nodeCardSettings.isFieldVisible('quality', 'history')"
               data-node-ping-bars="loss"
               class="grid min-h-0 min-w-0 w-full flex-1 items-end gap-[1px] opacity-80 group-hover/panel:opacity-100"
               :style="{ gridTemplateColumns: `repeat(${lossRenderBars.length}, minmax(0, 1fr))` }"
@@ -568,7 +676,7 @@ function hasRegion(region: string | null | undefined): boolean {
         </div>
 
         <!-- 自定义标签 -->
-        <div v-if="customTags.length > 0" class="flex flex-wrap gap-1">
+        <div v-if="showTags && customTags.length > 0" class="flex flex-wrap gap-1" :style="{ order: 99 }">
           <Badge
             v-for="(tag, i) in customTags" :key="i"
             variant="outline"
@@ -580,8 +688,9 @@ function hasRegion(region: string | null | undefined): boolean {
 
         <!-- 离线遮罩 -->
         <div
-          v-if="!props.node.online"
+          v-if="showOfflineMask && !props.node.online"
           class="absolute inset-0 flex flex-col items-center justify-center z-10 rounded-xl bg-white/20 dark:bg-black/20 backdrop-blur-[2px]"
+          :style="{ order: 100 }"
         >
           <div class="text-sm font-semibold text-destructive">
             离线
@@ -616,8 +725,26 @@ function hasRegion(region: string | null | undefined): boolean {
   flex: 0 0 auto;
 }
 
-.summary-separator {
-  color: color-mix(in srgb, currentColor 45%, transparent);
+.summary-item {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.section-heading :deep(svg) {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .resource-row {

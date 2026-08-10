@@ -68,7 +68,7 @@ onUnmounted(() => {
     >
       <LoadingCover v-if="appStore.loading" />
     </Transition>
-    <Header />
+    <Header v-if="appStore.headerVisible" />
     <Transition
       :css="!appStore.disablePageAnimation"
       enter-active-class="transition-all duration-300 ease-out"
@@ -107,7 +107,7 @@ onUnmounted(() => {
             </RouterView>
           </div>
         </main>
-        <Footer />
+        <Footer v-if="appStore.footerVisible" />
       </div>
     </Transition>
     <Toaster rich-colors close-button position="top-center" />

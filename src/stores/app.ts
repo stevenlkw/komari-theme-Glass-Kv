@@ -1172,6 +1172,14 @@ const useAppStore = defineStore('app', () => {
 
   const hidePriceWhenLoggedOut = computed<boolean>(() => readBooleanSetting(themeSettings.value, 'hidePriceWhenLoggedOut', false))
 
+  const headerVisible = computed<boolean>(() => readBooleanSetting(themeSettings.value, 'headerVisible', true))
+
+  const footerVisible = computed<boolean>(() => readBooleanSetting(themeSettings.value, 'footerVisible', true))
+
+  const homeSearchVisible = computed<boolean>(() => readBooleanSetting(themeSettings.value, 'homeSearchVisible', true))
+
+  const homeViewSwitcherVisible = computed<boolean>(() => readBooleanSetting(themeSettings.value, 'homeViewSwitcherVisible', true))
+
   const providerAliases = computed<string>(() => readStringSetting(themeSettings.value, 'providerAliases'))
 
   const exportSecondaryPassword = computed<string>(() => readStringSetting(themeSettings.value, 'exportSecondaryPassword'))
@@ -1293,6 +1301,7 @@ const useAppStore = defineStore('app', () => {
 
   return {
     loading,
+    themeSettings,
     themeMode,
     managedThemeMode,
     isBeijingDaytime,
@@ -1345,6 +1354,10 @@ const useAppStore = defineStore('app', () => {
     chartDashboardTemplate,
     hideAdminEntryWhenLoggedOut,
     hidePriceWhenLoggedOut,
+    headerVisible,
+    footerVisible,
+    homeSearchVisible,
+    homeViewSwitcherVisible,
     providerAliases,
     exportSecondaryPassword,
     disablePageAnimation,

@@ -49,6 +49,8 @@ const emit = defineEmits<{
   pingClick: [node: NodeData]
 }>()
 
+const KEY_LIST_SEPARATOR = /[\s,，、]+/
+
 const rowStaggerMs = UI_CONFIG.motion.staggerMs
 const rowStaggerLimit = UI_CONFIG.motion.staggerLimit
 
@@ -74,7 +76,25 @@ const baseColumns: ColumnConfig[] = [
   { key: 'rate', label: '速率', width: '88px', sortable: true },
 ]
 
-const columns = computed(() => baseColumns.filter(col => col.key !== 'metadata' || appStore.nodeListMetadataEnabled))
+const nodeListColumnKeys = computed(() => {
+  const defaultKeys = baseColumns.map(column => column.key)
+  const raw = appStore.themeSettings.nodeListColumns
+  if (typeof raw !== 'string')
+    return defaultKeys
+
+  const allowed = new Set(defaultKeys)
+  const keys = raw
+    .split(KEY_LIST_SEPARATOR)
+    .map(key => key.trim())
+    .filter(key => allowed.has(key))
+
+  return keys.length > 0 ? [...new Set(keys)] : defaultKeys
+})
+
+const columns = computed(() => nodeListColumnKeys.value
+  .map(key => baseColumns.find(column => column.key === key))
+  .filter((column): column is ColumnConfig => Boolean(column))
+  .filter(column => column.key !== 'metadata' || appStore.nodeListMetadataEnabled))
 const providerMetadataEnabled = computed(() => {
   return appStore.nodeListMetadataEnabled
     && appStore.nodeListMetadataFields.some(field => field === 'provider' || field === 'city' || field === 'asn')

@@ -129,6 +129,11 @@ watch(searchText, (value) => {
   updateDebouncedSearch(value)
 })
 
+watch(() => appStore.homeSearchVisible, (visible) => {
+  if (!visible)
+    clearSearch()
+})
+
 const groups = computed(() => [
   { tab: '全部节点', name: 'all' },
   ...nodesStore.groups.map(g => ({ tab: g, name: g })),
@@ -490,23 +495,25 @@ const nodeCardGridClass = computed(() => {
                 </Button>
               </div>
 
-              <Button
-                variant="outline" size="icon" aria-label="卡片视图"
-                class="w-8 h-8 border-none bg-background/50 backdrop-blur-xs shadow-none hover:bg-background/60 rounded-md"
-                :class="[appStore.nodeViewMode === 'card' ? '!text-selection !bg-background' : '']"
-                @click="setNodeViewMode('card')"
-              >
-                <Icon icon="tabler:layout-grid" :width="14" :height="14" />
-              </Button>
-              <Button
-                variant="outline" size="icon" aria-label="列表视图"
-                class="w-8 h-8 border-none bg-background/50 backdrop-blur-xs shadow-none hover:bg-background/60 rounded-md"
-                :class="[appStore.nodeViewMode === 'list' ? '!text-selection !bg-background' : '']"
-                @click="setNodeViewMode('list')"
-              >
-                <Icon icon="tabler:table" :width="14" :height="14" />
-              </Button>
-              <div class="relative z-1 h-8" :class="searchText ? 'w-full sm:w-60' : 'w-8'">
+              <template v-if="appStore.homeViewSwitcherVisible">
+                <Button
+                  variant="outline" size="icon" aria-label="卡片视图"
+                  class="w-8 h-8 border-none bg-background/50 backdrop-blur-xs shadow-none hover:bg-background/60 rounded-md"
+                  :class="[appStore.nodeViewMode === 'card' ? '!text-selection !bg-background' : '']"
+                  @click="setNodeViewMode('card')"
+                >
+                  <Icon icon="tabler:layout-grid" :width="14" :height="14" />
+                </Button>
+                <Button
+                  variant="outline" size="icon" aria-label="列表视图"
+                  class="w-8 h-8 border-none bg-background/50 backdrop-blur-xs shadow-none hover:bg-background/60 rounded-md"
+                  :class="[appStore.nodeViewMode === 'list' ? '!text-selection !bg-background' : '']"
+                  @click="setNodeViewMode('list')"
+                >
+                  <Icon icon="tabler:table" :width="14" :height="14" />
+                </Button>
+              </template>
+              <div v-if="appStore.homeSearchVisible" class="relative z-1 h-8" :class="searchText ? 'w-full sm:w-60' : 'w-8'">
                 <div class="absolute top-0 right-0 w-full">
                   <Input
                     v-model="searchText" placeholder="搜索名称、地区、IP、CPU"
