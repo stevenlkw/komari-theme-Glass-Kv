@@ -34,8 +34,8 @@ const { getNodeProviderMetadata } = useNodeProviderMetadata({
   nodes: () => [props.node],
   customAliases: () => appStore.providerAliases,
   enabled: () => appStore.nodeCardSize !== 'mini'
-    && nodeCardSettings.isSectionVisible('identity')
-    && nodeCardSettings.isFieldVisible('identity', 'provider'),
+    && nodeCardSettings.isSectionVisible('system')
+    && nodeCardSettings.isFieldVisible('system', 'provider'),
   allowGeoLookup: () => appStore.privateFeaturesAllowed,
   geoPermission: 'providerGeoLookup',
 })
@@ -383,11 +383,11 @@ function hasRegion(region: string | null | undefined): boolean {
 
     <template #default>
       <div class="flex flex-col relative" :class="nodeCardContentClass">
-        <!-- 身份、硬件、系统与期限统一归入一个系统资料区块。 -->
+        <!-- 服务商、费用、硬件、系统与期限统一由 system 字段组控制。 -->
         <div
-          v-if="!isMiniNodeCard && (nodeCardSettings.isSectionVisible('identity') || nodeCardSettings.isSectionVisible('system'))"
+          v-if="!isMiniNodeCard && nodeCardSettings.isSectionVisible('system')"
           class="server-summary -mt-1 space-y-1.5 rounded-xl bg-slate-500/5 px-2.5 py-2 text-[11px] text-muted-foreground"
-          :style="{ order: Math.min(nodeCardSettings.getSectionOrder('identity'), nodeCardSettings.getSectionOrder('system')) }"
+          :style="{ order: nodeCardSettings.getSectionOrder('system') }"
         >
           <div class="section-heading">
             <Icon icon="tabler:server-cog" class="text-violet-500" />
@@ -395,11 +395,11 @@ function hasRegion(region: string | null | undefined): boolean {
           </div>
 
           <div
-            v-if="nodeCardSettings.isSectionVisible('identity') && (nodeCardSettings.isFieldVisible('identity', 'provider') || (nodeCardSettings.isFieldVisible('identity', 'price') && priceAmountText) || (nodeCardSettings.isFieldVisible('identity', 'billing') && billingText))"
+            v-if="nodeCardSettings.isFieldVisible('system', 'provider') || (nodeCardSettings.isFieldVisible('system', 'price') && priceAmountText) || (nodeCardSettings.isFieldVisible('system', 'billing') && billingText)"
             class="summary-line"
           >
             <span
-              v-if="nodeCardSettings.isFieldVisible('identity', 'provider')"
+              v-if="nodeCardSettings.isFieldVisible('system', 'provider')"
               class="summary-item min-w-0"
               :title="providerTooltip"
             >
@@ -407,14 +407,14 @@ function hasRegion(region: string | null | undefined): boolean {
               <span class="truncate">{{ providerText }}</span>
             </span>
             <span
-              v-if="nodeCardSettings.isFieldVisible('identity', 'price') && priceAmountText"
+              v-if="nodeCardSettings.isFieldVisible('system', 'price') && priceAmountText"
               class="inline-flex shrink-0 items-center gap-1 rounded-md bg-emerald-500/15 px-1.5 py-0.5 font-semibold text-emerald-700 dark:text-emerald-300"
             >
               <Icon icon="tabler:coin" />
               <span>{{ priceAmountText }}</span>
             </span>
             <span
-              v-if="nodeCardSettings.isFieldVisible('identity', 'billing') && billingText"
+              v-if="nodeCardSettings.isFieldVisible('system', 'billing') && billingText"
               class="inline-flex shrink-0 items-center gap-1 rounded-md bg-amber-500/15 px-1.5 py-0.5 font-semibold text-amber-700 dark:text-amber-300"
             >
               <Icon icon="tabler:calendar-repeat" />
@@ -472,15 +472,15 @@ function hasRegion(region: string | null | undefined): boolean {
           </div>
 
           <div
-            v-if="nodeCardSettings.isSectionVisible('identity') && (nodeCardSettings.isFieldVisible('identity', 'uptime') || nodeCardSettings.isFieldVisible('identity', 'remaining'))"
+            v-if="nodeCardSettings.isFieldVisible('system', 'uptime') || nodeCardSettings.isFieldVisible('system', 'remaining')"
             class="summary-line"
           >
-            <span v-if="nodeCardSettings.isFieldVisible('identity', 'uptime')" class="summary-item">
+            <span v-if="nodeCardSettings.isFieldVisible('system', 'uptime')" class="summary-item">
               <Icon icon="tabler:clock-play" class="text-teal-500" />
               <span>{{ uptimeDaysText }}</span>
             </span>
             <span
-              v-if="nodeCardSettings.isFieldVisible('identity', 'remaining')"
+              v-if="nodeCardSettings.isFieldVisible('system', 'remaining')"
               class="summary-item rounded-md px-1"
               :class="remainingInfo.danger ? 'bg-destructive/10 font-semibold text-destructive' : ''"
             >

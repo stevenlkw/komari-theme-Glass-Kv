@@ -12,6 +12,12 @@
 
 ## 当前任务
 
+- 状态：done，Glass Kv v3.3.3-kv.8 价格与系统字段归属修复完成
+- 目标：价格、付费周期、服务商、运行和剩余时间真正归入 system；系统资料开启时不再依赖 identity，并使用新配置键避开 kv.7 旧值污染。
+- 不做：不绕过未登录隐藏价格，不修改 Komari 节点价格数据或权限逻辑。
+- 验证：Bun 1.3.14 下 `bun run lint`、`bun run build`、`git diff --check` 通过；Vue 严格类型检查通过；Impeccable 机械检测为零告警；价格隐私条件保留；归档包含 manifest、preview.png、dist/index.html。
+- 成品：`Komari-Glass-Kv-3.3.3-kv.8.zip`，manifest 版本 3.3.3-kv.8，SHA-256 为 `09E835B89B6CB8E9F73B8B098455367F554CAD40E95E6563AE1E77DCA02ACB92`。
+
 - 状态：done，Glass Kv v3.3.3-kv.7 系统资料区块重新归类完成
 - 目标：把服务商、硬件、流量配额、带宽、CPU 型号、系统、费用、运行和到期信息合并进一个系统资料块；移除内核显示。
 - 不做：不改数据来源、后台路由、详情页、Ping、费用权限或卡片其他功能。

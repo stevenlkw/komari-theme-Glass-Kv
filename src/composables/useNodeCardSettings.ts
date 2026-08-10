@@ -9,8 +9,8 @@ const SECTION_KEYS: readonly NodeCardSection[] = ['identity', 'system', 'usage',
 const KEY_LIST_SEPARATOR = /[\s,，、]+/
 
 const FIELD_KEYS: Record<NodeCardFieldGroup, readonly NodeCardField[]> = {
-  identity: ['provider', 'region', 'price', 'billing', 'uptime', 'remaining'],
-  system: ['cores', 'arch', 'diskTotal', 'trafficLimit', 'bandwidth', 'cpuModel', 'os', 'virtualization'],
+  identity: ['region'],
+  system: ['provider', 'price', 'billing', 'cores', 'arch', 'diskTotal', 'trafficLimit', 'bandwidth', 'cpuModel', 'os', 'uptime', 'remaining', 'virtualization'],
   usage: ['cpu', 'memory', 'swap', 'disk', 'traffic'],
   network: ['uploadSpeed', 'downloadSpeed', 'uploadTotal', 'downloadTotal'],
   quality: ['telecom', 'unicom', 'mobile', 'latency', 'loss', 'history'],
@@ -19,22 +19,22 @@ const FIELD_KEYS: Record<NodeCardFieldGroup, readonly NodeCardField[]> = {
 const SECTION_PRESETS: Record<string, readonly NodeCardSection[]> = {
   full: SECTION_KEYS,
   compact: ['identity', 'system', 'usage', 'quality'],
-  monitor: ['identity', 'usage', 'network', 'quality'],
-  minimal: ['identity', 'usage'],
+  monitor: ['identity', 'system', 'usage', 'network', 'quality'],
+  minimal: ['identity', 'system', 'usage'],
 }
 
 const FIELD_PRESETS: Record<NodeCardFieldGroup, readonly NodeCardField[]> = {
   identity: FIELD_KEYS.identity,
   // virtualization 可通过 custom 字段重新启用，默认不占用卡片高度。
-  system: ['cores', 'arch', 'diskTotal', 'trafficLimit', 'bandwidth', 'cpuModel', 'os'],
+  system: ['provider', 'price', 'billing', 'cores', 'arch', 'diskTotal', 'trafficLimit', 'bandwidth', 'cpuModel', 'os', 'uptime', 'remaining'],
   usage: FIELD_KEYS.usage,
   network: FIELD_KEYS.network,
   quality: FIELD_KEYS.quality,
 }
 
 const FIELD_SETTING_KEYS: Record<NodeCardFieldGroup, string> = {
-  identity: 'nodeCardIdentityFields',
-  system: 'nodeCardSystemFields',
+  identity: 'nodeCardTitleFields',
+  system: 'nodeCardSystemFieldsV2',
   usage: 'nodeCardUsageFields',
   network: 'nodeCardNetworkFields',
   quality: 'nodeCardQualityFields',
@@ -70,13 +70,8 @@ export function useNodeCardSettings() {
   const fields = computed<Record<NodeCardFieldGroup, NodeCardField[]>>(() => {
     const configured = {} as Record<NodeCardFieldGroup, NodeCardField[]>
     for (const group of Object.keys(FIELD_KEYS) as NodeCardFieldGroup[]) {
-      const rawValue = appStore.themeSettings[FIELD_SETTING_KEYS[group]]
-      // kv.6 的系统字段包含 kernel；升级时自动换成新的系统与带宽字段。
-      const value = group === 'system' && typeof rawValue === 'string' && rawValue.includes('kernel')
-        ? `${rawValue}\nos\nbandwidth`
-        : rawValue
       configured[group] = parseKeyList(
-        value,
+        appStore.themeSettings[FIELD_SETTING_KEYS[group]],
         FIELD_KEYS[group],
         FIELD_PRESETS[group],
       )
